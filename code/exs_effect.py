@@ -50,3 +50,4 @@ effectbl['diff3'] = np.where(effectbl[Variabletochec] - effectbl[Variabletochec 
 effectbl['diff4'] = np.where(effectbl[Variabletochec] - effectbl[Variabletochec + "+4"] < Pain_threshold, 0, 1)
 
 corrtbl = effectbl.corr()
+oueeee
