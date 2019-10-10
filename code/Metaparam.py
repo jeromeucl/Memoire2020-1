@@ -28,6 +28,9 @@ t8 = mgtbl(t7,min_impurity_decrease,'min_impurity_decrease')
 t8['Bcr_test'] = 0
 t8['Bcr_train'] = 0
 
+
+
+train, test, label_train, label_test = train_test_split(Worktbl, label, random_state=42, test_size=0.2)
 def fillinetree(table):
 
 
