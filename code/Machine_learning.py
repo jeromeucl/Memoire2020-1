@@ -1,3 +1,7 @@
+'''This file is the main file to execute, You have to run on you laptop the local mysql database
+first and change the variable working directory (witch will be the directory where all the output at csv format will be registered)
+second change the 'sytem.path.append(YOURFOLDER)' with the location of the python files'''
+from datetime import date
 import os
 import sys
 
