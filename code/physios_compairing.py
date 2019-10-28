@@ -1,6 +1,4 @@
-'''This file is the main file to execute, You have to run on you laptop the local mysql database
-first and change the variable working directory (witch will be the directory where all the output at csv format will be registered)
-second change the 'sytem.path.append(YOURFOLDER)' with the location of the python files'''
+
 from datetime import date
 import os
 import sys
@@ -56,7 +54,7 @@ def AAunwrap(Table, number_of_diffrerent_responses, STring):
 #                             db='moveup_dwh', charset='utf8mb4', cursorclass=pymysql.cursors.DictCursor)
 
 # mysql connection to the local database
-connection = pymysql.connect(host='127.0.0.1', user='root', password='root',
+connection = pymysql.connect(host='35.240.31.173', user='root', password='aKkidLJ45hdturo3',
                              db='moveup_dwh', charset='utf8mb4', cursorclass=pymysql.cursors.DictCursor)
 # Select the exercise_scheme table and patient_daily_data table to build one big table useful for the machine learning
 # Each row is a patient at a given day
@@ -135,6 +133,10 @@ nrow = len(tbl[tbl.columns[0]])
 # Select from the big talbe the data usefull for the machine learning and drop the labels and patient id
 worktbl = tbl.drop(exsh_column, axis=1)
 
+#Drop all day that are after datetime.date(2019, 8, 14)
+import datetime
+worktbl =worktbl[(worktbl['date'] > datetime.date(2019, 8, 14)) ]
+
 # Drop unuseful column for machine learning
 worktbl = worktbl.drop(['patientnumber', 'date', 'surgery_date'], axis=1)
 
@@ -190,12 +192,7 @@ matching.remove("9999_frequency")
 worktbl = worktbl.fillna(method='bfill')
 worktbl = worktbl.fillna(method='ffill')
 # ------------------------
-#Results_cv = crossval(matching, mapping_exercises, tbl, worktbl)
-# save the Results
-#
-# Results_cv.to_csv(Working_Directory+"\Results_cv_"+str(date.today())+".csv")
+import pickle
+clf = pickle.load(open("modeltoexport\\modelfor_1001_frequency.sav", 'rb'))
+test_pred = clf.predict(worktbl)
 
-#Results = importfeature(matching,mapping_exercises,tbl,worktbl,mapping_questionnaires, mapping_answers)
-# save the Results
-#
-# Results.to_csv(Working_Directory+"\Results_with_previousdexo"+str(date.today())+".csv")
