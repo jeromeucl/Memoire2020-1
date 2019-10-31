@@ -1,4 +1,4 @@
-
+'''This file create a table with the predictoin for each exercise and the exercise proposed by the physios'''
 from datetime import date
 import os
 import sys
@@ -10,6 +10,7 @@ from Mostimportantfeature import *
 
 Working_Directory = "C:\\Users\cocol\Desktop\memoire\Jéjé_work"
 
+Directory_with_pickle_models ="modeltoexport\\modelfor_"
 
 
 
@@ -53,9 +54,12 @@ def AAunwrap(Table, number_of_diffrerent_responses, STring):
 # connection = pymysql.connect(host='173.31.240.35.bc.googleusercontent.com', user='', password='',
 #                             db='moveup_dwh', charset='utf8mb4', cursorclass=pymysql.cursors.DictCursor)
 
+# mysql connection to the moveUp database
+#connection = pymysql.connect(host='35.240.31.173', user='root', password='aKkidLJ45hdturo3',db='moveup_dwh', charset='utf8mb4', cursorclass=pymysql.cursors.DictCursor)
+
 # mysql connection to the local database
-connection = pymysql.connect(host='35.240.31.173', user='root', password='aKkidLJ45hdturo3',
-                             db='moveup_dwh', charset='utf8mb4', cursorclass=pymysql.cursors.DictCursor)
+connection = pymysql.connect(host='127.0.0.1', user='root', password='root',db='moveup_dwh', charset='utf8mb4', cursorclass=pymysql.cursors.DictCursor)
+
 # Select the exercise_scheme table and patient_daily_data table to build one big table useful for the machine learning
 # Each row is a patient at a given day
 '''This function uses a sql statement and a connection to a database to return a dataframe according to the sql_statement'''
@@ -127,18 +131,15 @@ tbl = pd.merge(exercise_scheme_of_the_day_before, tbl, on=['patient_id', 'day'],
 # Get the different columns name for each exercises: frequency, intensity and actual
 exsh_column = list(exercise_scheme.columns)
 exsh_column.remove('day')
+exsh_column.remove('patient_id')
 # Get the number of row of the final frame
 nrow = len(tbl[tbl.columns[0]])
 
 # Select from the big talbe the data usefull for the machine learning and drop the labels and patient id
 worktbl = tbl.drop(exsh_column, axis=1)
 
-#Drop all day that are after datetime.date(2019, 8, 14)
-import datetime
-worktbl =worktbl[(worktbl['date'] > datetime.date(2019, 8, 14)) ]
 
-# Drop unuseful column for machine learning
-worktbl = worktbl.drop(['patientnumber', 'date', 'surgery_date'], axis=1)
+
 
 # That part i remove it now but i will add it later because there is an issue with the 1A2A3 format and i will treat ti
 worktbl = worktbl.drop(['AcWh1', 'InDo1', 'MeAr1_other', 'MeAr2_other', 'ExWh3', 'WeWh2'], axis=1)
@@ -165,6 +166,7 @@ Output : the above worktbl modified
 
 
 def add_to_work(String, workTbl, Bigtbl, number_of_diffrerent_responses):
+
     if not os.path.isfile(Working_Directory + "\\filled_" + String + ".csv"):
         Newtbl = AAunwrap(Bigtbl, number_of_diffrerent_responses, String)
         Newtbl.to_csv(Working_Directory + "\\filled_" + String + ".csv")
@@ -172,7 +174,7 @@ def add_to_work(String, workTbl, Bigtbl, number_of_diffrerent_responses):
     workTbl = pd.concat([workTbl, df1], axis=1, sort=False)
     return workTbl.drop(['Unnamed: 0'], axis=1)
 
-
+print('Warning you should supress the 4 filled_ files if you are not using the local database in you directory')
 # AcWh1 (what's activity did you do today)?
 worktbl = add_to_work('AcWh1', worktbl, tbl, 14)
 
@@ -191,8 +193,37 @@ matching.remove("9999_frequency")
 # Fill the null values
 worktbl = worktbl.fillna(method='bfill')
 worktbl = worktbl.fillna(method='ffill')
+
+#Drop all day that are after datetime.date(2019, 8, 14)
+import datetime
+# '14-08-2019'
+worktbl=worktbl.loc[pd.to_datetime(worktbl['date']) > '14-06-2019']
+
+# Drop unuseful column for machine learning
+patient_date = worktbl.loc[:, ['patient_id', 'date','day']]
+
+worktbl = worktbl.drop(['patientnumber', 'date', 'surgery_date','patient_id'], axis=1)
 # ------------------------
 import pickle
-clf = pickle.load(open("modeltoexport\\modelfor_1001_frequency.sav", 'rb'))
-test_pred = clf.predict(worktbl)
+matching.remove('4011_frequency')
+matching = [x for x in matching if not x.startswith('3')]
+for exo in matching:
+    with open(Directory_with_pickle_models+str(exo)+".sav",'rb') as f:
+        clf = pickle.load(f)
+        patient_date['model_prediction'+str(exo)] = clf.predict(worktbl)
+#patient_date['day']-=1
+finaltbl = pd.merge(exercise_scheme, patient_date, on=['patient_id', 'day'], how='right')
+#finaltbl.to_csv(Working_Directory+"\physiocomparingtable.csv")
+
+'''This function return a table for a certain patient and a certain exercise
+The number of exercise is of the format 1001, 1002, 1003'''
+def patient_tbl(numberOfexercise,patient_ID,finalTBL):
+    t = finalTBL.loc[finalTBL['patient_id']==patient_ID]
+    t = t.loc[:, ['patient_id', 'day', 'date', str(numberOfexercise)+"_frequency", "model_prediction"+str(numberOfexercise)+"_frequency"]]
+    return t
+
+chectbl = patient_tbl(2002,"2AiecvBPzpNkpqXd7##ws7AxBRXhP466gYbA",finaltbl)
+
+
+
 

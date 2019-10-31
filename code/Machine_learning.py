@@ -96,6 +96,8 @@ exsh_column = list(exercise_scheme.columns)
 # Merge all teh dataframe to get one big table
 
 patient_daily_data.rename(columns={'diff': 'day'}, inplace=True)
+
+
 # Store a table with the exercises of the day before
 exercise_scheme_of_the_day_before = exercise_scheme.copy()
 
@@ -135,8 +137,6 @@ nrow = len(tbl[tbl.columns[0]])
 # Select from the big talbe the data usefull for the machine learning and drop the labels and patient id
 worktbl = tbl.drop(exsh_column, axis=1)
 
-# Drop unuseful column for machine learning
-worktbl = worktbl.drop(['patientnumber', 'date', 'surgery_date'], axis=1)
 
 # That part i remove it now but i will add it later because there is an issue with the 1A2A3 format and i will treat ti
 worktbl = worktbl.drop(['AcWh1', 'InDo1', 'MeAr1_other', 'MeAr2_other', 'ExWh3', 'WeWh2'], axis=1)
@@ -189,6 +189,69 @@ matching.remove("9999_frequency")
 # Fill the null values
 worktbl = worktbl.fillna(method='bfill')
 worktbl = worktbl.fillna(method='ffill')
+
+# Select from the big talbe the data usefull for the machine learning and drop the labels and patient id
+worktbl = tbl.drop(exsh_column, axis=1)
+
+
+
+
+# That part i remove it now but i will add it later because there is an issue with the 1A2A3 format and i will treat ti
+worktbl = worktbl.drop(['AcWh1', 'InDo1', 'MeAr1_other', 'MeAr2_other', 'ExWh3', 'WeWh2'], axis=1)
+
+# Transform some columns to a useful format (from string to number)
+worktbl["gender"].replace({'Female': 0, 'Male': 1}, inplace=True)
+worktbl["MeAr2"].replace(-1.0, np.nan, inplace=True)
+
+worktbl = pd.concat([worktbl.drop(['limb'], axis=1), pd.get_dummies(worktbl['limb'])], axis=1)
+
+
+
+'''Preprocessing string with 1A2A3A fromat'''
+
+'''This function add to the workTbl a feature form the Bigtbl under the 1A2A3 fromat under the shape of multiple
+columns filled with 0 or 1
+Input : String: The name of the column in the Bigtbl
+        worktbl: The table in which the features are added
+        Bigtbl: A talbe with 1A2A3 format columns
+        number_of_diffrerent_responses: for the question String, several possible answers exist,
+        number_of_diffrerent_responses is the number of possible answers
+Output : the above worktbl modified
+'''
+
+
+def add_to_work(String, workTbl, Bigtbl, number_of_diffrerent_responses):
+    if not os.path.isfile(Working_Directory + "\\filled_" + String + ".csv"):
+        Newtbl = AAunwrap(Bigtbl, number_of_diffrerent_responses, String)
+        Newtbl.to_csv(Working_Directory + "\\filled_" + String + ".csv")
+    df1 = pd.read_csv(Working_Directory + "\\filled_" + String + ".csv")
+    workTbl = pd.concat([workTbl, df1], axis=1, sort=False)
+    return workTbl.drop(['Unnamed: 0'], axis=1)
+
+
+# AcWh1 (what's activity did you do today)?
+worktbl = add_to_work('AcWh1', worktbl, tbl, 14)
+
+# InDo1 (Do you experience swelling in other places than the index joint?  )
+worktbl = add_to_work('InDo1', worktbl, tbl, 6)
+
+#  'ExWh3'Why didn't you do your exercises
+worktbl = add_to_work('ExWh3', worktbl, tbl, 4)
+
+# 'WeWh2' Why didn't you wear your band all day??
+worktbl = add_to_work('WeWh2', worktbl, tbl, 3)
+
+# Select all the columns containing frequency in the table with the different exercise as columns for the label
+matching = [s for s in exsh_column if "frequency" in s]
+matching.remove("9999_frequency")
+# Fill the null values
+worktbl = worktbl.fillna(method='bfill')
+worktbl = worktbl.fillna(method='ffill')
+
+
+# Drop unuseful column for machine learning
+worktbl = worktbl.drop(['patientnumber', 'date', 'surgery_date'], axis=1)
+# ------------------------
 # ------------------------
 #Results_cv = crossval(matching, mapping_exercises, tbl, worktbl)
 # save the Results
