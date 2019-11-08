@@ -216,14 +216,14 @@ finaltbl = pd.merge(exercise_scheme, patient_date, on=['patient_id', 'day'], how
 #finaltbl.to_csv(Working_Directory+"\physiocomparingtable.csv")
 
 '''This function return a table for a certain patient and a certain exercise
-The number of exercise is of the format 1001, 1002, 1003'''
+The number of exercise must be written as format 1001, 1002, 1003'''
 def patient_tbl(numberOfexercise,patient_ID,finalTBL):
     t = finalTBL.loc[finalTBL['patient_id']==patient_ID]
     t = t.loc[:, ['patient_id', 'day', 'date', str(numberOfexercise)+"_frequency", "model_prediction"+str(numberOfexercise)+"_frequency"]]
     return t
 
-chectbl = patient_tbl(2002,"2AiecvBPzpNkpqXd7##ws7AxBRXhP466gYbA",finaltbl)
+chectbl = patient_tbl(2010,"2AiecvBPzpNkpqXd7##ws7AxBRXhP466gYbA",finaltbl)
 
-
+#hey = finaltbl.loc[:,['1002_frequency','model_prediction1002_frequency ']]
 
 

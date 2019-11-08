@@ -27,7 +27,7 @@ Output : A dataframe where each row contains 0 or 1 corresponding to the respect
 
 
 def AAunwrap(Table, number_of_diffrerent_responses, STring):
-    cname = [STring + '$' + str(i) for i in list(range(0, number_of_diffrerent_responses + 1))]
+    cname = [STring + '$' + str(i) for i in list(range(0, number_of_diffrerent_responses))]
     nbrow = len(Table[Table.columns[0]])
     Temporarytbl = pd.DataFrame(np.zeros(shape=(nbrow, len(cname)), dtype=int), columns=cname)
 
@@ -247,18 +247,97 @@ matching.remove("9999_frequency")
 # Fill the null values
 worktbl = worktbl.fillna(method='bfill')
 worktbl = worktbl.fillna(method='ffill')
+worktbl['date'] = pd.to_datetime(worktbl['date'])
+#Add the trend of the pain
+'''this function return a table that can be concatenated with the worktbl and contain trend of information about continous variable 
+as the pain, the 'threshold' is the significant level of difference you need to asses. The number of past day 1 is the numer of days on which you want to
+compute the average, the same goes for number_of_past_days2. number_of_past_days1 need to be greater than number_of_past_days2'''
+def add_trend_to_worktbl(Variable,threshold,number_of_past_days1,number_of_past_days2,Worktbl):
+
+    if number_of_past_days1 < number_of_past_days2:
+        Paintbl = Worktbl[['patientnumber','date','day',Variable]]
+
+        df = Paintbl.groupby('patientnumber').apply(lambda x: x.set_index('date').resample('1D').first())
+
+        df1 = df.groupby(level=0)[Variable].apply(lambda x: x.shift().rolling(min_periods=1,window=number_of_past_days1).mean()).reset_index(name=Variable +'_Average_Past_'+str(number_of_past_days1)+'_days')
+        medged_tbl = pd.merge(Paintbl, df1, on=['date', 'patientnumber'], how='left')
 
 
-# Drop unuseful column for machine learning
-worktbl = worktbl.drop(['patientnumber', 'date', 'surgery_date'], axis=1)
+        df2 = df.groupby(level=0)[Variable].apply(lambda x: x.shift().rolling(min_periods=1,window=number_of_past_days2).mean()).reset_index(name=Variable +'_Average_Past_'+str(number_of_past_days2)+'_days')
+        medged_tbl = pd.merge(medged_tbl, df2, on=['date', 'patientnumber'], how='left')
+        medged_tbl[str('Average_pain_increase_for_' + Variable+'and_'+str(number_of_past_days1)+'for_'+str(number_of_past_days2)+'previousdays')] = np.where(
+                medged_tbl[Variable +'_Average_Past_'+str(number_of_past_days2)+'_days'] - medged_tbl[str(Variable +'_Average_Past_'+str(number_of_past_days1)+'_days')] < -threshold, 1, 0)
+
+        medged_tbl[str('Average_pain_decrease_for_' + Variable+'and_'+str(number_of_past_days1)+'for_'+str(number_of_past_days2)+'previousdays')] = np.where(
+            medged_tbl[Variable + '_Average_Past_' + str(number_of_past_days2) + '_days'] - medged_tbl[
+                str(Variable + '_Average_Past_' + str(number_of_past_days1) + '_days')] > threshold, 1, 0)
+        medged_tbl = medged_tbl.drop([Variable +'_Average_Past_'+str(number_of_past_days1)+'_days',Variable +'_Average_Past_'+str(number_of_past_days2)+'_days'], axis=1)
+    else :
+        medged_tbl =0
+        print('Wrong order of pain average days (number_of_past_days 1 and 2)')
+    return medged_tbl
+
+thresh = 0
+var = 'PaIn1'
+trend_tbl = add_trend_to_worktbl(var,thresh,3,7,worktbl)
+worktbl = pd.concat([worktbl, trend_tbl], axis=1)
+worktbl = worktbl.loc[:,~worktbl.columns.duplicated()]
+trend_tbl = add_trend_to_worktbl(var,thresh,2,5,worktbl)
+worktbl = pd.concat([worktbl, trend_tbl], axis=1)
+worktbl = worktbl.loc[:,~worktbl.columns.duplicated()]
+
+var = 'PaIn2'
+trend_tbl = add_trend_to_worktbl(var,thresh,3,7,worktbl)
+worktbl = pd.concat([worktbl, trend_tbl], axis=1)
+worktbl = worktbl.loc[:,~worktbl.columns.duplicated()]
+trend_tbl = add_trend_to_worktbl(var,thresh,2,5,worktbl)
+worktbl = pd.concat([worktbl, trend_tbl], axis=1)
+worktbl = worktbl.loc[:,~worktbl.columns.duplicated()]
+
+
+
+worktbl = worktbl.drop(['date','patientnumber','surgery_date'], axis=1)
+
+
+
+#Replace all names of columns in the worktbl by their full names:
+code_names = list(worktbl.columns)
+
+for ft in code_names:
+    print(ft)
+    message = ''
+    if find_dolar(ft):
+        feature_code, answer = ft.split("$")
+        index1 = find_index(feature_code, mapping_questionnaires, "question_code")
+        if index1 > -1:
+            message = message + " " + feature_code + ": " + mapping_questionnaires['question'][index1] + " "
+            index2 = find_index(feature_code, mapping_answers, "question_code")
+            if index2 > -1:
+                positions = return_index(feature_code, mapping_answers, "question_code")
+                ans = mapping_answers[['value_text', 'value_code']].iloc[positions]
+                message = message + " ANSWER: " + ans[ans.value_code == int(answer)]['value_text'].values[0] + " "
+                worktbl.rename(columns={ft: message},inplace=True)
+            else :
+                worktbl.rename(columns={ft: message},inplace=True)
+        else:
+            message = message + ft + " "
+            worktbl.rename(columns={ft: message},inplace=True)
+
+    else:
+        index3 = find_index(ft, mapping_questionnaires, "question_code")
+        if index3 > -1:
+            message = message + " " + ft + ": " + mapping_questionnaires['question'][index3] + " "
+            worktbl.rename(columns={ft: message},inplace=True)
+
 # ------------------------
 # ------------------------
+from crossvalidation import crossval
 #Results_cv = crossval(matching, mapping_exercises, tbl, worktbl)
 # save the Results
 #
-# Results_cv.to_csv(Working_Directory+"\Results_cv_"+str(date.today())+".csv")
+#Results_cv.to_csv(Working_Directory+"\Results_cv_"+str(date.today())+".csv")
 
 #Results = importfeature(matching,mapping_exercises,tbl,worktbl,mapping_questionnaires, mapping_answers)
 # save the Results
 #
-# Results.to_csv(Working_Directory+"\Results_with_previousdexo"+str(date.today())+".csv")
+#Results.to_csv(Working_Directory+"\Results_with_previousdexo"+str(date.today())+".csv")
