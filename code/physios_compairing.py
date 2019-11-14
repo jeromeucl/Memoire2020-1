@@ -9,8 +9,8 @@ protocoltbl_knee = pd.read_csv("C:\\Users\cocol\Desktop\memoire\Jéjé_work\comp
 protocoltbl_knee.rename(columns={"Days": "day"}, inplace=True)
 
 
-knee_patient = tbl[tbl['limb'].str.contains("Hip")][['patient_id']]
-hip_patient = tbl[tbl['limb'].str.contains("Knee")][['patient_id']]
+hip_patient = tbl[tbl['limb'].str.contains("Hip")][['patient_id']]
+knee_patient = tbl[tbl['limb'].str.contains("Knee")][['patient_id']]
 
 knee_worktbl = worktbl[worktbl['patient_id'].isin(list(knee_patient['patient_id'].unique()))]
 hip_worktbl = worktbl[worktbl['patient_id'].isin(list(hip_patient['patient_id'].unique()))]
@@ -27,8 +27,7 @@ matching = [x for x in matching if not x.startswith('3')]
 def compare_protocol_PT(prot_pt_tbl, ex_number,predtbl):
     Returntbl = prot_pt_tbl[['patient_id', 'patientnumber']].copy()
     Returntbl['day'] = prot_pt_tbl['day']
-    Returntbl['PT_decision'] = prot_pt_tbl[ex_number + "_frequency"].notnull().astype(int).to_frame()[
-        ex_number + "_frequency"]
+    Returntbl['PT_decision'] = prot_pt_tbl[ex_number + "_frequency"].notnull().astype(int).to_frame()
     Returntbl['Protocol_advice'] = prot_pt_tbl[ex_number]
     clf2 = pickle.load(open("C:\\Users\cocol\PycharmProjects\Memoire2020\code\modeltoexport\modelfor_" + str(ex_number) + "_frequency.sav",'rb'))
     workingtbl = predtbl.drop(['patientnumber', 'date', 'surgery_date', 'patient_id'], axis=1).copy()

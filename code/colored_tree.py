@@ -4,6 +4,7 @@ from Machine_learning import *
 import pydotplus
 matching.remove('4011_frequency')
 matching = [x for x in matching if not x.startswith('3')]
+worktbl = worktbl.drop(['patientnumber', 'date', 'surgery_date', 'patient_id'], axis=1)
 for exo in matching:
     clf2 = pickle.load(open("modeltoexport\\modelfor_"+str(exo)+".sav", 'rb'))
 
@@ -31,4 +32,4 @@ for exo in matching:
                     node.set_fillcolor('red')
             else:
                 node.set_fillcolor('white')
-    graph.write_png('C:\\Users\cocol\Desktop\memoire\Jéjé_work\\tree_per_exo_dislay\\tree_for'+str(exo))
+    graph.write_png('C:\\Users\cocol\Desktop\memoire\Jéjé_work\\tree_per_exo_dislay\\tree_for'+str(exo)+'.png')

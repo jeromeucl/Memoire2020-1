@@ -10,11 +10,11 @@ import pydotplus
 import graphviz
 from IPython.display import Image
 import collections
-
+worktbl = worktbl.drop(['patientnumber', 'date', 'surgery_date', 'patient_id'], axis=1)
 matching.remove('4011_frequency')
 matching = [x for x in matching if not x.startswith('3')]
 #model_param = pd.read_csv("C:\\Users\cocol\Desktop\memoire\Jéjé_work\metaparam\FINALTBL2019-10-14.csv")
-model_param = pd.read_csv("FINALTBL2019-10-1.csv")
+model_param = pd.read_csv("C:\\Users\cocol\Desktop\memoire\Jéjé_work\metaparam\FINALTBL2019-11-14.csv")
 #matching = ["1001_frequency"]
 for exo in matching:
 

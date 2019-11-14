@@ -15,4 +15,4 @@ for exo in matching:
     ind = Df['Bcr_test'].idxmax(axis=0)
     dfObj = dfObj.append({'exercise_number': exo, 'criterion': ind[0], 'max_depth': ind[1], 'min_samples_split': ind[2],
                           'min_impurity_decrease': ind[3],'Bcr_test':Df.loc[ind]['Bcr_test']}, ignore_index=True)
-#dfObj.to_csv("C:\\Users\cocol\Desktop\memoire\Jéjé_work\metaparam\FINALTBL"+str(date.today())+".csv")
+dfObj.to_csv("C:\\Users\cocol\Desktop\memoire\Jéjé_work\metaparam\FINALTBL"+str(date.today())+".csv")
