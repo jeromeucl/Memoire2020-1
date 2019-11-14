@@ -45,6 +45,7 @@ def crossval(Matching, Mapping_exercises, Big_tbl, Worktbl):
 
                 # Predict the label for train set
                 train_pred = clf.predict(train)
+
                 # confusion_matrix(y_true, y_pred)
 
                 bcr_train = balanced_accuracy_score(label_train, train_pred)
