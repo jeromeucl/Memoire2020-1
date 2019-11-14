@@ -1,229 +1,26 @@
 '''This file create a table with the predictoin for each exercise and the exercise proposed by the physios'''
-from datetime import date
-import os
-import sys
-
-import pymysql.cursors
-
-sys.path.append('C:\\Users\cocol\Desktop\memoire\Jéjé_work\code')
-from Mostimportantfeature import *
-
-Working_Directory = "C:\\Users\cocol\Desktop\memoire\Jéjé_work"
-
-Directory_with_pickle_models ="modeltoexport\\modelfor_"
-
-
-
-
-''' This fuction handle the '1A2A3' fromat to usefull features for the machine learning algorithm and split the cell
-    into a certain number of column equals to the number_of_diffrerent_responses to the question asked and fill the column
-    with one if the patient answered yes to a given question and with 0 otherwise. For example if there is 6 possibilities of
-    answers (0, 1, 2, 3, 4, 5) and the cells show '1A2A3' you will have a [ 0 1 1 1 0 0] for this row.
-Input: Table: A table with a column containing the 1A2A3 format
-       number_of_different_responses: the number of different possibility of answers to the question asked to the patient (ex: 8)
-       STring: the string reffered to the column in 'Table' (ex: 'AcHw1')
-Output : A dataframe where each row contains 0 or 1 corresponding to the respective '1A2A3' format of the imput'''
-
-
-def AAunwrap(Table, number_of_diffrerent_responses, STring):
-    cname = [STring + '$' + str(i) for i in list(range(0, number_of_diffrerent_responses + 1))]
-    nbrow = len(Table[Table.columns[0]])
-    Temporarytbl = pd.DataFrame(np.zeros(shape=(nbrow, len(cname)), dtype=int), columns=cname)
-
-    Temporarytbl['String'] = Table[STring]
-    '''This fuction is used for speed up everinthing and work with the apply function below'''
-
-    def fastfill(TAble):
-        if TAble['String'] is not None and  pd.isna(TAble['String'])==False:
-            # split the 1A2A3 fromat into [1 2 3]
-            Lst = list(map(int, list(filter(None, TAble['String'].split('A')))))
-            for t in range(len(Lst)):
-                TAble[Lst[t]] = 1
-        return TAble
-
-    # Fill the table composed with only 0 with the corresponding ones with respect to the answers of the patient
-    Temporarytbl = Temporarytbl.apply(fastfill, axis=1).drop(['String'], axis=1)
-
-    return Temporarytbl
-
-
-
-
-
-# mysql connection to the cloud
-# connection = pymysql.connect(host='173.31.240.35.bc.googleusercontent.com', user='', password='',
-#                             db='moveup_dwh', charset='utf8mb4', cursorclass=pymysql.cursors.DictCursor)
-
-# mysql connection to the moveUp database
-#connection = pymysql.connect(host='35.240.31.173', user='root', password='aKkidLJ45hdturo3',db='moveup_dwh', charset='utf8mb4', cursorclass=pymysql.cursors.DictCursor)
-
-# mysql connection to the local database
-connection = pymysql.connect(host='127.0.0.1', user='root', password='root',db='moveup_dwh', charset='utf8mb4', cursorclass=pymysql.cursors.DictCursor)
-
-# Select the exercise_scheme table and patient_daily_data table to build one big table useful for the machine learning
-# Each row is a patient at a given day
-'''This function uses a sql statement and a connection to a database to return a dataframe according to the sql_statement'''
-
-
-def read_from_sql_server(Connection, sql_statement):
-    return pd.read_sql(sql_statement, Connection, index_col=None, coerce_float=True, params=None, parse_dates=None,
-                       columns=None,
-                       chunksize=None)
-
-
-# Load all the useful dataframe
-sql = "select * from exercise_scheme;"
-exercise_scheme = read_from_sql_server(connection, sql)
-
-sql = "select * from patient_daily_data;"
-patient_daily_data = read_from_sql_server(connection, sql)
-
-sql = "SELECT * FROM moveup_dwh.mapping_exercises;"
-mapping_exercises = read_from_sql_server(connection, sql)
-
-sql = "SELECT * FROM moveup_dwh.mapping_questionnaires;"
-mapping_questionnaires = read_from_sql_server(connection, sql)
-sql = "SELECT * FROM moveup_dwh.mapping_answers;"
-mapping_answers = read_from_sql_server(connection, sql)
-
-sql = "SELECT * FROM moveup_dwh.patients;"
-patient_data = read_from_sql_server(connection, sql)
-
-patient_data.rename(columns={'id': 'patient_id'}, inplace=True)
-patient_dt = patient_data[['patient_id', 'age', 'gender', 'limb']]
-
-# Get the different columns name for each exercises: frequency, intensity and actual
-exsh_column = list(exercise_scheme.columns)
-
-# Merge all teh dataframe to get one big table
-
-patient_daily_data.rename(columns={'diff': 'day'}, inplace=True)
-# Store a table with the exercises of the day before
-exercise_scheme_of_the_day_before = exercise_scheme.copy()
-
-cols = exercise_scheme_of_the_day_before.columns.drop(
-    list(exercise_scheme_of_the_day_before.filter(regex='intensity')) + list(
-        exercise_scheme_of_the_day_before.filter(regex='actual')))
-exercise_scheme_of_the_day_before = exercise_scheme_of_the_day_before[cols]
-exercise_scheme_of_the_day_before = exercise_scheme_of_the_day_before.apply(
-    lambda x: x.notnull().astype(int) if "frequency" in x.name else x)
-
-#I would like to go through all the columns in a dataframe and rename (or map) columns if they contain certain strings.
-#https://stackoverflow.com/questions/32621677/pandas-rename-column-if-contains-string
-exercise_scheme_of_the_day_before.columns = exercise_scheme_of_the_day_before.columns.str.replace('frequency', 'Activated_yesterday')
-
-# Handle the fact that the programation of physio is made from data from the day before
-patient_daily_data_of_the_day_before = patient_daily_data.copy()
-patient_daily_data_of_the_day_before['day'] += 1
-#Add the exercices mades the day before
-exercise_scheme_of_the_day_before['day'] += 1
-# merge a big table with every data we need
-tbl = pd.merge(exercise_scheme, patient_daily_data_of_the_day_before, on=['patient_id', 'day'], how='left')
-tbl = pd.merge(patient_dt, tbl, on=['patient_id'], how='right')
-tbl = pd.merge(exercise_scheme_of_the_day_before, tbl, on=['patient_id', 'day'], how='right')
-
-# removing patient operated before 1 november 2017, the 3 in the lines of code are because the tbl doesnt contain the day of the operation.
-#tbl['date'] = pd.to_datetime(tbl['date'])
-
-#names = tbl['patient_id'][(tbl['date'] <= '2017-11-3')]
-#tbl = tbl.loc[~tbl['patient_id'].isin(names.values)]
-
-# Get the different columns name for each exercises: frequency, intensity and actual
-exsh_column = list(exercise_scheme.columns)
-exsh_column.remove('day')
-exsh_column.remove('patient_id')
-# Get the number of row of the final frame
-nrow = len(tbl[tbl.columns[0]])
-
-# Select from the big talbe the data usefull for the machine learning and drop the labels and patient id
-worktbl = tbl.drop(exsh_column, axis=1)
-
-
-
-
-# That part i remove it now but i will add it later because there is an issue with the 1A2A3 format and i will treat ti
-worktbl = worktbl.drop(['AcWh1', 'InDo1', 'MeAr1_other', 'MeAr2_other', 'ExWh3', 'WeWh2'], axis=1)
-
-# Transform some columns to a useful format (from string to number)
-worktbl["gender"].replace({'Female': 0, 'Male': 1}, inplace=True)
-worktbl["MeAr2"].replace(-1.0, np.nan, inplace=True)
-
-worktbl = pd.concat([worktbl.drop(['limb'], axis=1), pd.get_dummies(worktbl['limb'])], axis=1)
-
-
-
-'''Preprocessing string with 1A2A3A fromat'''
-
-'''This function add to the workTbl a feature form the Bigtbl under the 1A2A3 fromat under the shape of multiple
-columns filled with 0 or 1
-Input : String: The name of the column in the Bigtbl
-        worktbl: The table in which the features are added
-        Bigtbl: A talbe with 1A2A3 format columns
-        number_of_diffrerent_responses: for the question String, several possible answers exist,
-        number_of_diffrerent_responses is the number of possible answers
-Output : the above worktbl modified
-'''
-
-
-def add_to_work(String, workTbl, Bigtbl, number_of_diffrerent_responses):
-
-    if not os.path.isfile(Working_Directory + "\\filled_" + String + ".csv"):
-        Newtbl = AAunwrap(Bigtbl, number_of_diffrerent_responses, String)
-        Newtbl.to_csv(Working_Directory + "\\filled_" + String + ".csv")
-    df1 = pd.read_csv(Working_Directory + "\\filled_" + String + ".csv")
-    workTbl = pd.concat([workTbl, df1], axis=1, sort=False)
-    return workTbl.drop(['Unnamed: 0'], axis=1)
-
-print('Warning you should supress the 4 filled_ files if you are not using the local database in you directory')
-# AcWh1 (what's activity did you do today)?
-worktbl = add_to_work('AcWh1', worktbl, tbl, 14)
-
-# InDo1 (Do you experience swelling in other places than the index joint?  )
-worktbl = add_to_work('InDo1', worktbl, tbl, 6)
-
-#  'ExWh3'Why didn't you do your exercises
-worktbl = add_to_work('ExWh3', worktbl, tbl, 4)
-
-# 'WeWh2' Why didn't you wear your band all day??
-worktbl = add_to_work('WeWh2', worktbl, tbl, 3)
-
-# Select all the columns containing frequency in the table with the different exercise as columns for the label
-matching = [s for s in exsh_column if "frequency" in s]
-matching.remove("9999_frequency")
-# Fill the null values
-worktbl = worktbl.fillna(method='bfill')
-worktbl = worktbl.fillna(method='ffill')
-
-#Drop all day that are after datetime.date(2019, 8, 14)
-import datetime
-# '14-08-2019'
-worktbl=worktbl.loc[pd.to_datetime(worktbl['date']) > '14-06-2019']
-
-# Drop unuseful column for machine learning
-patient_date = worktbl.loc[:, ['patient_id', 'date','day']]
-
-worktbl = worktbl.drop(['patientnumber', 'date', 'surgery_date','patient_id'], axis=1)
-# ------------------------
+from Machine_learning import *
 import pickle
+#load protocol and merge it with exercise shceme
+protocoltbl_hip = pd.read_csv("C:\\Users\cocol\Desktop\memoire\Jéjé_work\comparativetbl\protocol\protocol_hip.csv")
+protocoltbl_hip.rename(columns={"Days": "day"}, inplace=True)
+protocoltbl_knee = pd.read_csv("C:\\Users\cocol\Desktop\memoire\Jéjé_work\comparativetbl\protocol\protocol_knee.csv")
+protocoltbl_knee.rename(columns={"Days": "day"}, inplace=True)
+prot_pt_tbl_hip = pd.merge(exercise_scheme, protocoltbl_hip, on=['day'], how='right')
+prot_pt_tbl_knee = pd.merge(exercise_scheme, protocoltbl_knee, on=['day'], how='right')
+
 matching.remove('4011_frequency')
 matching = [x for x in matching if not x.startswith('3')]
+
+
+def compare_protocol_PT(prot_pt_tbl,hip_or_knee):
+    Returntbl = prot_pt_tbl[['patient_id','day']].copy()
+    Returntbl['day'] = prot_pt_tbl['day']
+
+    exexcise_list = [s for s in prot_pt_tbl.columns if s.isdigit()]
+    for ex_number in exexcise_list:
+        Returntbl['PT_Protocol_difference_'+hip_or_knee+'_' + ex_number] = (prot_pt_tbl[ex_number + "_frequency"].notnull().astype(int).to_frame()[ex_number + "_frequency"] - prot_pt_tbl[ex_number]).abs()
+
+    return Returntbl
 for exo in matching:
-    with open(Directory_with_pickle_models+str(exo)+".sav",'rb') as f:
-        clf = pickle.load(f)
-        patient_date['model_prediction'+str(exo)] = clf.predict(worktbl)
-#patient_date['day']-=1
-finaltbl = pd.merge(exercise_scheme, patient_date, on=['patient_id', 'day'], how='right')
-#finaltbl.to_csv(Working_Directory+"\physiocomparingtable.csv")
-
-'''This function return a table for a certain patient and a certain exercise
-The number of exercise must be written as format 1001, 1002, 1003'''
-def patient_tbl(numberOfexercise,patient_ID,finalTBL):
-    t = finalTBL.loc[finalTBL['patient_id']==patient_ID]
-    t = t.loc[:, ['patient_id', 'day', 'date', str(numberOfexercise)+"_frequency", "model_prediction"+str(numberOfexercise)+"_frequency"]]
-    return t
-
-chectbl = patient_tbl(2010,"2AiecvBPzpNkpqXd7##ws7AxBRXhP466gYbA",finaltbl)
-
-#hey = finaltbl.loc[:,['1002_frequency','model_prediction1002_frequency ']]
-
-
+    clf2 = pickle.load(open("modeltoexport\\modelfor_"+str(exo)+".sav", 'rb'))

@@ -9,7 +9,7 @@ from Machine_learning import *
 from sklearn.metrics import balanced_accuracy_score, make_scorer
 BCR = make_scorer(balanced_accuracy_score)
 # Number of random trials
-NUM_TRIALS = 1
+NUM_TRIALS = 3
 
 # Load the dataset
 worktbl = worktbl.drop(['patientnumber', 'date', 'surgery_date', 'patient_id'], axis=1)
@@ -18,14 +18,15 @@ y_iris = tbl['1001_frequency'].notnull().astype(int).to_frame()
 
 # Set up possible values of parameters to optimize over
 #p_grid = {"C": [1, 10, 100],"gamma": [.01, .1]}
-p_grid = {"max_depth": [2,3,6,10,15,20],"min_samples_split" : [2,4,5,8,10,15,20],"min_impurity_decrease" : [0,0.01,0.03,0.05,0.07,0.1,0.15,0.2,0.3],'criterion':['entropy','gini']}
+p_grid = {"max_depth": [2,3,6,10,15,20],"min_samples_split" : [5,8,10,15,20],"min_impurity_decrease" : [0,0.01],'criterion':['entropy','gini']}
 # We will use a Support Vector Classifier with "rbf" kernel
 #svm = SVC(kernel="rbf")
 
 # Arrays to store scores
 non_nested_scores = np.zeros(NUM_TRIALS)
 nested_scores = np.zeros(NUM_TRIALS)
-
+dfObj = pd.DataFrame(
+    columns=['exercise_number', 'criterion', 'max_depth', 'min_samples_split', 'min_impurity_decrease', 'nested_Bcr_test'])
 # Loop for each trial
 for i in range(NUM_TRIALS):
     print('Number of trials = '+str(i))
@@ -33,8 +34,8 @@ for i in range(NUM_TRIALS):
     # independently of the dataset.
     # E.g "GroupKFold", "LeaveOneOut", "LeaveOneGroupOut", etc.
     # Same as K-Fold but preserves the class distribution within each fold
-    inner_cv = StratifiedKFold(n_splits=4, shuffle=True, random_state=i)
-    outer_cv = StratifiedKFold(n_splits=4, shuffle=True, random_state=i)
+    inner_cv = StratifiedKFold(n_splits=3, shuffle=True, random_state=i)
+    outer_cv = StratifiedKFold(n_splits=3, shuffle=True, random_state=i)
 
     # Non_nested parameter search and scoring
     clf = GridSearchCV(estimator=tree.DecisionTreeClassifier(), param_grid=p_grid, cv=inner_cv,

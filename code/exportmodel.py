@@ -14,7 +14,7 @@ import collections
 matching.remove('4011_frequency')
 matching = [x for x in matching if not x.startswith('3')]
 #model_param = pd.read_csv("C:\\Users\cocol\Desktop\memoire\Jéjé_work\metaparam\FINALTBL2019-10-14.csv")
-model_param = pd.read_csv("FINALTBL2019-10-14.csv")
+model_param = pd.read_csv("FINALTBL.csv")
 #matching = ["1001_frequency"]
 for exo in matching:
 
@@ -32,31 +32,4 @@ for exo in matching:
     else:
         print('Issue with label_train.values')
 
-clf2 = pickle.load(open("modeltoexport\\modelfor_1001_frequency.sav", 'rb'))
-#test_pred = clf2.predict(test)
 
-
-
-# Create DOT data
-dot_data = tree.export_graphviz(clf2,impurity=False, out_file=None,
-                                feature_names=list(worktbl.columns),
-                                class_names=matching[1],filled=True,
-                                rounded=True,
-                                special_characters=True)
-
-# Draw graph
-graph = pydotplus.graph_from_dot_data(dot_data)
-
-# Show graph
-nodes = graph.get_node_list()
-#nodes = graph.get_edge_list()
-for node in nodes:
-    if node.get_label():
-        if node.get_label().split("samples = ")[0]=='<':
-            if node.get_label().split('class = ')[1].split('>')[0] =='1':
-                node.set_fillcolor('green')
-            else:
-                node.set_fillcolor('red')
-        else:
-            node.set_fillcolor('white')
-graph.write_png('colored_tree.png')

@@ -4,6 +4,7 @@ from sklearn import tree
 from sklearn.metrics import balanced_accuracy_score
 from sklearn.model_selection import train_test_split
 from Machine_learning import worktbl,tbl,matching
+worktbl = worktbl.drop(['patientnumber', 'date', 'surgery_date', 'patient_id'], axis=1)
 def mgtbl(table,lisT,nameoflist):
     inTH = len(lisT)
     newtbl = pd.DataFrame({'Nb_run': np.tile(Nb_run, inTH), nameoflist: np.repeat(lisT, 10, axis=0)})
@@ -12,9 +13,9 @@ def mgtbl(table,lisT,nameoflist):
 for meta in range(0,len(matching)):
     curr = matching[meta]
     Nb_run = list(range(10))
-    max_depth = [2,3,6,10,15,20]
-    min_samples_split = [2,4,5,8,10,15,20]
-    min_impurity_decrease = [0,0.01,0.03,0.05,0.07,0.1,0.15,0.2,0.3]
+    max_depth = [3,5,10,20]
+    min_samples_split = [5,10,15,20]
+    min_impurity_decrease = [0,0.01]
     t1 = pd.DataFrame({'Nb_run':np.repeat(Nb_run,1,axis=0),'criterion':np.repeat(['entropy'],10, axis=0)})
     t2 = pd.DataFrame({'Nb_run':np.repeat(Nb_run,1,axis=0),'criterion':np.repeat(['gini'],10, axis=0)})
     t3 = t1.append(t2)
