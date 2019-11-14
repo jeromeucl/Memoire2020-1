@@ -56,8 +56,11 @@ def AAunwrap(Table, number_of_diffrerent_responses, STring):
 #                             db='moveup_dwh', charset='utf8mb4', cursorclass=pymysql.cursors.DictCursor)
 
 # mysql connection to the local database
-connection = pymysql.connect(host='127.0.0.1', user='root', password='root',
-                             db='moveup_dwh', charset='utf8mb4', cursorclass=pymysql.cursors.DictCursor)
+connection = pymysql.connect(host='127.0.0.1', user='root', password='root',db='moveup_dwh', charset='utf8mb4', cursorclass=pymysql.cursors.DictCursor)
+
+# mysql connection to the moveUp database
+#connection = pymysql.connect(host='35.240.31.173', user='root', password='aKkidLJ45hdturo3',db='moveup_dwh', charset='utf8mb4', cursorclass=pymysql.cursors.DictCursor)
+
 # Select the exercise_scheme table and patient_daily_data table to build one big table useful for the machine learning
 # Each row is a patient at a given day
 '''This function uses a sql statement and a connection to a database to return a dataframe according to the sql_statement'''
@@ -122,6 +125,9 @@ tbl = pd.merge(exercise_scheme, patient_daily_data_of_the_day_before, on=['patie
 tbl = pd.merge(patient_dt, tbl, on=['patient_id'], how='right')
 tbl = pd.merge(exercise_scheme_of_the_day_before, tbl, on=['patient_id', 'day'], how='right')
 
+
+
+
 # removing patient operated before 1 november 2017, the 3 in the lines of code are because the tbl doesnt contain the day of the operation.
 #tbl['date'] = pd.to_datetime(tbl['date'])
 
@@ -131,64 +137,11 @@ tbl = pd.merge(exercise_scheme_of_the_day_before, tbl, on=['patient_id', 'day'],
 # Get the different columns name for each exercises: frequency, intensity and actual
 exsh_column = list(exercise_scheme.columns)
 exsh_column.remove('day')
+exsh_column.remove('patient_id')
 # Get the number of row of the final frame
 nrow = len(tbl[tbl.columns[0]])
 
-# Select from the big talbe the data usefull for the machine learning and drop the labels and patient id
-worktbl = tbl.drop(exsh_column, axis=1)
 
-
-# That part i remove it now but i will add it later because there is an issue with the 1A2A3 format and i will treat ti
-worktbl = worktbl.drop(['AcWh1', 'InDo1', 'MeAr1_other', 'MeAr2_other', 'ExWh3', 'WeWh2'], axis=1)
-
-# Transform some columns to a useful format (from string to number)
-worktbl["gender"].replace({'Female': 0, 'Male': 1}, inplace=True)
-worktbl["MeAr2"].replace(-1.0, np.nan, inplace=True)
-
-worktbl = pd.concat([worktbl.drop(['limb'], axis=1), pd.get_dummies(worktbl['limb'])], axis=1)
-
-
-
-'''Preprocessing string with 1A2A3A fromat'''
-
-'''This function add to the workTbl a feature form the Bigtbl under the 1A2A3 fromat under the shape of multiple
-columns filled with 0 or 1
-Input : String: The name of the column in the Bigtbl
-        worktbl: The table in which the features are added
-        Bigtbl: A talbe with 1A2A3 format columns
-        number_of_diffrerent_responses: for the question String, several possible answers exist,
-        number_of_diffrerent_responses is the number of possible answers
-Output : the above worktbl modified
-'''
-
-
-def add_to_work(String, workTbl, Bigtbl, number_of_diffrerent_responses):
-    if not os.path.isfile(Working_Directory + "\\filled_" + String + ".csv"):
-        Newtbl = AAunwrap(Bigtbl, number_of_diffrerent_responses, String)
-        Newtbl.to_csv(Working_Directory + "\\filled_" + String + ".csv")
-    df1 = pd.read_csv(Working_Directory + "\\filled_" + String + ".csv")
-    workTbl = pd.concat([workTbl, df1], axis=1, sort=False)
-    return workTbl.drop(['Unnamed: 0'], axis=1)
-
-
-# AcWh1 (what's activity did you do today)?
-worktbl = add_to_work('AcWh1', worktbl, tbl, 14)
-
-# InDo1 (Do you experience swelling in other places than the index joint?  )
-worktbl = add_to_work('InDo1', worktbl, tbl, 6)
-
-#  'ExWh3'Why didn't you do your exercises
-worktbl = add_to_work('ExWh3', worktbl, tbl, 4)
-
-# 'WeWh2' Why didn't you wear your band all day??
-worktbl = add_to_work('WeWh2', worktbl, tbl, 3)
-
-# Select all the columns containing frequency in the table with the different exercise as columns for the label
-matching = [s for s in exsh_column if "frequency" in s]
-matching.remove("9999_frequency")
-# Fill the null values
-worktbl = worktbl.fillna(method='bfill')
-worktbl = worktbl.fillna(method='ffill')
 
 # Select from the big talbe the data usefull for the machine learning and drop the labels and patient id
 worktbl = tbl.drop(exsh_column, axis=1)
@@ -247,6 +200,7 @@ matching.remove("9999_frequency")
 # Fill the null values
 worktbl = worktbl.fillna(method='bfill')
 worktbl = worktbl.fillna(method='ffill')
+
 worktbl['date'] = pd.to_datetime(worktbl['date'])
 #Add the trend of the pain
 '''this function return a table that can be concatenated with the worktbl and contain trend of information about continous variable 
@@ -285,6 +239,9 @@ worktbl = worktbl.loc[:,~worktbl.columns.duplicated()]
 trend_tbl = add_trend_to_worktbl(var,thresh,2,5,worktbl)
 worktbl = pd.concat([worktbl, trend_tbl], axis=1)
 worktbl = worktbl.loc[:,~worktbl.columns.duplicated()]
+trend_tbl = add_trend_to_worktbl(var,thresh,3,10,worktbl)
+worktbl = pd.concat([worktbl, trend_tbl], axis=1)
+worktbl = worktbl.loc[:,~worktbl.columns.duplicated()]
 
 var = 'PaIn2'
 trend_tbl = add_trend_to_worktbl(var,thresh,3,7,worktbl)
@@ -293,10 +250,13 @@ worktbl = worktbl.loc[:,~worktbl.columns.duplicated()]
 trend_tbl = add_trend_to_worktbl(var,thresh,2,5,worktbl)
 worktbl = pd.concat([worktbl, trend_tbl], axis=1)
 worktbl = worktbl.loc[:,~worktbl.columns.duplicated()]
+trend_tbl = add_trend_to_worktbl(var,thresh,3,10,worktbl)
+worktbl = pd.concat([worktbl, trend_tbl], axis=1)
+worktbl = worktbl.loc[:,~worktbl.columns.duplicated()]
 
 
 
-worktbl = worktbl.drop(['date','patientnumber','surgery_date'], axis=1)
+
 
 
 
@@ -304,7 +264,7 @@ worktbl = worktbl.drop(['date','patientnumber','surgery_date'], axis=1)
 code_names = list(worktbl.columns)
 
 for ft in code_names:
-    print(ft)
+
     message = ''
     if find_dolar(ft):
         feature_code, answer = ft.split("$")
@@ -329,15 +289,48 @@ for ft in code_names:
             message = message + " " + ft + ": " + mapping_questionnaires['question'][index3] + " "
             worktbl.rename(columns={ft: message},inplace=True)
 
+# Build a list of patient in the group knee or in the group hip
+list_of_hip_patient = tbl[tbl['limb'].str.contains("Hip")]['patientnumber'].dropna().drop_duplicates()
+list_of_knee_patient = tbl[tbl['limb'].str.contains("Knee")]['patientnumber'].dropna().drop_duplicates()
+
+# Build a worktbl (able to enter the machine learning algorithm) of patient in the group knee or in the group hip
+worktbl['day'] = worktbl['day'].astype(int)
+tbl_hip = worktbl[worktbl['patientnumber'].isin(list(list_of_hip_patient))]
+tbl_knee = worktbl[worktbl['patientnumber'].isin(list(list_of_knee_patient))]
+
+
+protocoltbl_hip = pd.read_csv("C:\\Users\cocol\Desktop\memoire\Jéjé_work\comparativetbl\protocol\protocol_hip.csv")
+protocoltbl_hip.rename(columns={"Days": "day"}, inplace=True)
+protocoltbl_knee = pd.read_csv("C:\\Users\cocol\Desktop\memoire\Jéjé_work\comparativetbl\protocol\protocol_knee.csv")
+protocoltbl_knee.rename(columns={"Days": "day"}, inplace=True)
+prot_pt_tbl_hip = pd.merge(exercise_scheme, protocoltbl_hip, on=['day'], how='right')
+prot_pt_tbl_knee = pd.merge(exercise_scheme, protocoltbl_knee, on=['day'], how='right')
+
+
+
+def compare_protocol_PT(prot_pt_tbl):
+    Returntbl = prot_pt_tbl[['patient_id','day']].copy()
+    Returntbl['day'] = prot_pt_tbl['day']
+
+    exexcise_list = [s for s in prot_pt_tbl.columns if s.isdigit()]
+    for ex_number in exexcise_list:
+        Returntbl['PT_Protocol_difference' + ex_number] = (prot_pt_tbl[ex_number + "_frequency"].notnull().astype(int).to_frame()[ex_number + "_frequency"] - prot_pt_tbl[ex_number]).abs()
+
+    return Returntbl
+
+compare_protocol_PT_hip =compare_protocol_PT(prot_pt_tbl_hip)
+compare_protocol_PT_knee =compare_protocol_PT(prot_pt_tbl_knee)
+worktbl_hip = pd.merge(tbl_hip, compare_protocol_PT_hip, on=['day','patient_id'], how='left')
+worktbl_knee = pd.merge(tbl_knee, compare_protocol_PT_knee, on=['day','patient_id'], how='left')
 # ------------------------
 # ------------------------
 from crossvalidation import crossval
 #Results_cv = crossval(matching, mapping_exercises, tbl, worktbl)
 # save the Results
 #
-#Results_cv.to_csv(Working_Directory+"\Results_cv_"+str(date.today())+".csv")
+#Results_cv.to_csv(Working_Directory+"\cv\Results_cv_"+str(date.today())+".csv")
 
 #Results = importfeature(matching,mapping_exercises,tbl,worktbl,mapping_questionnaires, mapping_answers)
 # save the Results
 #
-#Results.to_csv(Working_Directory+"\Results_with_previousdexo"+str(date.today())+".csv")
+#Results.to_csv(Working_Directory+"\mostimportantfeature\Results_with_previousdexo"+str(date.today())+".csv")
