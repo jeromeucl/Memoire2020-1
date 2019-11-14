@@ -289,16 +289,11 @@ for ft in code_names:
             message = message + " " + ft + ": " + mapping_questionnaires['question'][index3] + " "
             worktbl.rename(columns={ft: message},inplace=True)
 
-# Build a list of patient in the group knee or in the group hip
-list_of_hip_patient = tbl[tbl['limb'].str.contains("Hip")]['patientnumber'].dropna().drop_duplicates()
-list_of_knee_patient = tbl[tbl['limb'].str.contains("Knee")]['patientnumber'].dropna().drop_duplicates()
 
 # Build a worktbl (able to enter the machine learning algorithm) of patient in the group knee or in the group hip
 worktbl['day'] = worktbl['day'].astype(int)
-tbl_hip = worktbl[worktbl['patientnumber'].isin(list(list_of_hip_patient))]
-tbl_knee = worktbl[worktbl['patientnumber'].isin(list(list_of_knee_patient))]
 
-
+#load protocol and merge it with exercise shceme
 protocoltbl_hip = pd.read_csv("C:\\Users\cocol\Desktop\memoire\Jéjé_work\comparativetbl\protocol\protocol_hip.csv")
 protocoltbl_hip.rename(columns={"Days": "day"}, inplace=True)
 protocoltbl_knee = pd.read_csv("C:\\Users\cocol\Desktop\memoire\Jéjé_work\comparativetbl\protocol\protocol_knee.csv")
@@ -308,23 +303,32 @@ prot_pt_tbl_knee = pd.merge(exercise_scheme, protocoltbl_knee, on=['day'], how='
 
 
 
-def compare_protocol_PT(prot_pt_tbl):
+def compare_protocol_PT(prot_pt_tbl,hip_or_knee):
     Returntbl = prot_pt_tbl[['patient_id','day']].copy()
     Returntbl['day'] = prot_pt_tbl['day']
 
     exexcise_list = [s for s in prot_pt_tbl.columns if s.isdigit()]
     for ex_number in exexcise_list:
-        Returntbl['PT_Protocol_difference' + ex_number] = (prot_pt_tbl[ex_number + "_frequency"].notnull().astype(int).to_frame()[ex_number + "_frequency"] - prot_pt_tbl[ex_number]).abs()
+        Returntbl['PT_Protocol_difference_'+hip_or_knee+'_' + ex_number] = (prot_pt_tbl[ex_number + "_frequency"].notnull().astype(int).to_frame()[ex_number + "_frequency"] - prot_pt_tbl[ex_number]).abs()
 
     return Returntbl
 
-compare_protocol_PT_hip =compare_protocol_PT(prot_pt_tbl_hip)
-compare_protocol_PT_knee =compare_protocol_PT(prot_pt_tbl_knee)
-worktbl_hip = pd.merge(tbl_hip, compare_protocol_PT_hip, on=['day','patient_id'], how='left')
-worktbl_knee = pd.merge(tbl_knee, compare_protocol_PT_knee, on=['day','patient_id'], how='left')
+compare_protocol_PT_hip =compare_protocol_PT(prot_pt_tbl_hip,'Hip')
+compare_protocol_PT_knee =compare_protocol_PT(prot_pt_tbl_knee,'Knee')
+
+compare_protocol_PT_hip['day'] = compare_protocol_PT_hip['day']+1
+compare_protocol_PT_knee['day'] = compare_protocol_PT_knee['day']+1
+
+worktbl = pd.merge(worktbl, compare_protocol_PT_hip, on=['day','patient_id'], how='left')
+# Fill the null values
+worktbl = pd.merge(worktbl, compare_protocol_PT_knee, on=['day','patient_id'], how='left')
+# Fill the null values
+worktbl = worktbl.fillna(method='bfill')
+worktbl = worktbl.fillna(method='ffill')
 # ------------------------
 # ------------------------
 from crossvalidation import crossval
+#worktbl = worktbl.drop(['patientnumber', 'date', 'surgery_date', 'patient_id'], axis=1)
 #Results_cv = crossval(matching, mapping_exercises, tbl, worktbl)
 # save the Results
 #
