@@ -1,6 +1,8 @@
 from sklearn.feature_selection import SelectKBest
 from sklearn.feature_selection import chi2
-
+import pandas as pd
+from Machine_learning import tbl, worktbl, matching
+from sklearn import preprocessing
 
 def features_selection(features_df, target,nb_of_features):
     # normalize the table to
@@ -16,8 +18,13 @@ def features_selection(features_df, target,nb_of_features):
 
     return df
 #features_selection(worktbl,label,6)
+scaled_worktbl = worktbl.drop(['patientnumber', 'date', 'surgery_date', 'patient_id'], axis=1)
+a = pd.DataFrame(data = {'col1': [1000, 200,300], 'col2': [10, 4,1],'col3': [1000, 200,300]})
 
-a = pd.DataFrame(data = {'col1': [1000, 200,300], 'col2': [10, 4,1]})
-from sklearn import preprocessing
 min_max_scaler = preprocessing.MinMaxScaler()
-a_scaled = min_max_scaler.fit_transform(a)
+a_scaled = pd.DataFrame(min_max_scaler.fit_transform(scaled_worktbl))
+a_scaled.columns = scaled_worktbl.columns
+selector = SelectKBest(chi2, k=3)
+selector.fit_transform(a_scaled, tbl['1001_frequency'].fillna(method='bfill').fillna(method='ffill'))
+cols = selector.get_support(indices=True)
+a_scaled = a_scaled.iloc[cols]

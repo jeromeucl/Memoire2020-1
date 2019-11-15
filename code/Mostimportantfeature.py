@@ -71,7 +71,7 @@ def importfeature(Matching,Mapping_exercises,Big_tbl,Worktbl,Mapping_questionnai
                 ignore_index=True)
         else:
             # Train prediction
-            clf = tree.DecisionTreeClassifier(max_depth=5)
+            clf = tree.DecisionTreeClassifier(max_depth=5,class_weight ='balanced')
             clf = clf.fit(train, label_train)
             # Get the most important feature
             importances = clf.feature_importances_

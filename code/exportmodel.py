@@ -25,7 +25,7 @@ for exo in matching:
     if sum(label_train.values) != 0:
         # Train prediction
         param = model_param[model_param['exercise_number'] == exo]
-        clf = tree.DecisionTreeClassifier(max_depth=param['max_depth'].values[0],criterion=param['criterion'].values[0],min_samples_split=int(param['min_samples_split'].values[0]),min_impurity_decrease=param['min_impurity_decrease'].values[0])
+        clf = tree.DecisionTreeClassifier(max_depth=param['max_depth'].values[0],criterion=param['criterion'].values[0],min_samples_split=int(param['min_samples_split'].values[0]),min_impurity_decrease=param['min_impurity_decrease'].values[0],class_weight ='balanced')
         clf = clf.fit(train, label_train)
         # Predict the label for train set
         pickle.dump(clf, open("modeltoexport\\modelfor_"+str(exo)+".sav",'wb'))

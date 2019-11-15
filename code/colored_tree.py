@@ -27,9 +27,9 @@ for exo in matching:
         if node.get_label():
             if node.get_label().split("samples = ")[0]=='<':
                 if node.get_label().split('class = ')[1].split('>')[0] =='1':
-                    node.set_fillcolor('green')
-                else:
                     node.set_fillcolor('red')
+                else:
+                    node.set_fillcolor('green')
             else:
                 node.set_fillcolor('white')
     graph.write_png('C:\\Users\cocol\Desktop\memoire\Jéjé_work\\tree_per_exo_dislay\\tree_for'+str(exo)+'.png')

@@ -40,7 +40,7 @@ for meta in range(0,len(matching)):
         if sum(label_train.values) != 0:
 
             # Train prediction
-            clf = tree.DecisionTreeClassifier(max_depth=table['max_depth'],criterion=table['criterion'],min_samples_split=table['min_samples_split'],min_impurity_decrease=table['min_impurity_decrease'])
+            clf = tree.DecisionTreeClassifier(max_depth=table['max_depth'],criterion=table['criterion'],min_samples_split=table['min_samples_split'],min_impurity_decrease=table['min_impurity_decrease'],class_weight ='balanced')
             clf = clf.fit(train, label_train)
 
             # Predict the label for train set

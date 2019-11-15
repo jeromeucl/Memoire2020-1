@@ -18,7 +18,7 @@ y_iris = tbl['1001_frequency'].notnull().astype(int).to_frame()
 
 # Set up possible values of parameters to optimize over
 #p_grid = {"C": [1, 10, 100],"gamma": [.01, .1]}
-p_grid = {"max_depth": [2,3,6,10,15,20],"min_samples_split" : [5,8,10,15,20],"min_impurity_decrease" : [0,0.01],'criterion':['entropy','gini']}
+p_grid = {"max_depth": [2,3,6,10,15,20],"min_samples_split" : [5,8,10,15,20],"min_impurity_decrease" : [0,0.01],'criterion':['entropy','gini'],'class_weight' :['balanced']}
 # We will use a Support Vector Classifier with "rbf" kernel
 #svm = SVC(kernel="rbf")
 

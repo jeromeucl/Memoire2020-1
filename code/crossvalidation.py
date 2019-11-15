@@ -39,7 +39,7 @@ def crossval(Matching, Mapping_exercises, Big_tbl, Worktbl):
                 iter -= 1
             else:
                 # Train prediction
-                clf = tree.DecisionTreeClassifier(max_depth=5)
+                clf = tree.DecisionTreeClassifier(max_depth=5,class_weight ='balanced')
                 clf = clf.fit(train, label_train)
                 # Get the most important feature
 
