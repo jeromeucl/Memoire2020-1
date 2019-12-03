@@ -11,8 +11,9 @@ import numpy as np
 def features_selection(features_df, target, nb_of_features):
     scaled_worktbl = features_df.drop(['patientnumber', 'date', 'surgery_date', 'patient_id'], axis=1)
     # normalize the table to
-    min_max_scaler = preprocessing.MinMaxScaler()
-    a_scaled = pd.DataFrame(min_max_scaler.fit_transform(scaled_worktbl))
+    #min_max_scaler = preprocessing.MinMaxScaler()
+    #a_scaled = pd.DataFrame(min_max_scaler.fit_transform(scaled_worktbl))
+    a_scaled = pd.DataFrame(preprocessing.scale(scaled_worktbl))
     a_scaled.columns = scaled_worktbl.columns
     # https://stackoverflow.com/questions/39839112/the-easiest-way-for-getting-feature-names-after-running-selectkbest-in-scikit-le
     # Create and fit selector with MI

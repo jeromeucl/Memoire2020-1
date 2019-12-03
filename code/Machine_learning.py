@@ -93,10 +93,31 @@ patient_data = read_from_sql_server(connection, sql)
 patient_data.rename(columns={'id': 'patient_id'}, inplace=True)
 patient_dt = patient_data[['patient_id', 'age', 'gender', 'limb']]
 
+
+
+'''This part of the code is aimed to merge the columns of exercises that are exaclty the same between hip and knee'''
+''''The function merge_exo take as argument two exercises number from the tbl table and merge them so it works with the rest of the
+code and store it in the table df'''
+def merge_exo(ex1,ex2,df):
+    dataframe = df.copy()
+    strexo1 = str(ex1)+'_frequency'
+    strexo2 = str(ex2) + '_frequency'
+    df = dataframe[[strexo1,strexo2]]
+    newcolumn = pd.DataFrame({str(ex1)+'+'+strexo2:df[strexo1].notna() | df[strexo2].notna()}).astype(float).replace(0, np.nan)
+    dataframe = pd.concat([dataframe,newcolumn],axis=1)
+    dataframe = dataframe.drop([strexo1], axis=1)
+    dataframe = dataframe.drop([strexo2], axis=1)
+    return dataframe
+
+
+
+
+
+
 # Get the different columns name for each exercises: frequency, intensity and actual
 exsh_column = list(exercise_scheme.columns)
 
-# Merge all teh dataframe to get one big table
+# Merge all the dataframe to get one big table
 
 patient_daily_data.rename(columns={'diff': 'day'}, inplace=True)
 
@@ -124,6 +145,7 @@ exercise_scheme_of_the_day_before['day'] += 1
 tbl = pd.merge(exercise_scheme, patient_daily_data_of_the_day_before, on=['patient_id', 'day'], how='left')
 tbl = pd.merge(patient_dt, tbl, on=['patient_id'], how='right')
 tbl = pd.merge(exercise_scheme_of_the_day_before, tbl, on=['patient_id', 'day'], how='right')
+
 
 
 
