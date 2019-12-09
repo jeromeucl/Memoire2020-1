@@ -1,6 +1,8 @@
 '''This file create a table with the predictoin for each exercise and the exercise proposed by the physios'''
-from Machine_learning import *
+import pandas as pd
 import pickle
+tbl = pd.read_csv("C:\\Users\cocol\Desktop\memoire\Jéjé_work\local_tbl.csv")
+worktbl = pd.read_csv("C:\\Users\cocol\Desktop\memoire\Jéjé_work\localworktbl.csv")
 from sklearn import tree
 # load protocol and merge it with exercise shceme
 protocoltbl_hip = pd.read_csv("C:\\Users\cocol\Desktop\memoire\Jéjé_work\comparativetbl\protocol\protocol_hip.csv")

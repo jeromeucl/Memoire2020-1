@@ -97,20 +97,27 @@ patient_dt = patient_data[['patient_id', 'age', 'gender', 'limb']]
 
 '''This part of the code is aimed to merge the columns of exercises that are exaclty the same between hip and knee'''
 ''''The function merge_exo take as argument two exercises number from the tbl table and merge them so it works with the rest of the
-code and store it in the table df'''
+code and store it in the table df without changing the name of the old columns'''
 def merge_exo(ex1,ex2,df):
     dataframe = df.copy()
     strexo1 = str(ex1)+'_frequency'
     strexo2 = str(ex2) + '_frequency'
     df = dataframe[[strexo1,strexo2]]
     newcolumn = pd.DataFrame({str(ex1)+'+'+strexo2:df[strexo1].notna() | df[strexo2].notna()}).astype(float).replace(0, np.nan)
-    dataframe = pd.concat([dataframe,newcolumn],axis=1)
-    dataframe = dataframe.drop([strexo1], axis=1)
-    dataframe = dataframe.drop([strexo2], axis=1)
+
+    if ex2==2010:
+        #only update exo for heel raise hip because it impove bcr
+        dataframe[strexo2] = newcolumn
+    else :
+        dataframe[strexo1] = newcolumn
+
+        dataframe[strexo2] = newcolumn
     return dataframe
 
+merge_exo_list = [[1001,2001],[1019,2008],[1012,2010],[1011,2009],[1002,1003]]
 
-
+for i in merge_exo_list:
+    exercise_scheme = merge_exo(i[0],i[1],exercise_scheme)
 
 
 
@@ -350,7 +357,7 @@ worktbl = worktbl.fillna(method='ffill')
 # ------------------------
 # ------------------------
 from crossvalidation import crossval
-#worktbl = worktbl.drop(['patientnumber', 'date', 'surgery_date', 'patient_id'], axis=1)
+
 #Results_cv = crossval(matching, mapping_exercises, tbl, worktbl)
 # save the Results
 #
@@ -360,3 +367,4 @@ from crossvalidation import crossval
 # save the Results
 #
 #Results.to_csv(Working_Directory+"\mostimportantfeature\Results_with_previousdexo"+str(date.today())+".csv")
+

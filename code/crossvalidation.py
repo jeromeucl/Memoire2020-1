@@ -7,7 +7,7 @@ from sklearn.model_selection import KFold  # import KFold
 def crossval(Matching, Mapping_exercises, Big_tbl, Worktbl):
     Worktlb = Worktbl.drop(['patientnumber', 'date', 'surgery_date', 'patient_id'], axis=1)
     # Build a dataframe for the results
-    results_cv = pd.DataFrame(columns=["Exercise", "Type_of_algorithm", "mean_Bcr_train", "mean_Bcr_test", 'Used_fold'])
+    results_cv = pd.DataFrame(columns=["Exercise","number", "Type_of_algorithm", "mean_Bcr_train", "mean_Bcr_test", 'Used_fold'])
     used_fold = 5
     '''Main loop'''
     # Pich one column corresponding to an exercise at a time and make it the label
@@ -62,7 +62,7 @@ def crossval(Matching, Mapping_exercises, Big_tbl, Worktbl):
             mean_Bcr_train = mean_Bcr_train / used_fold
             mean_Bcr_test = mean_Bcr_test / used_fold
         results_cv = results_cv.append(
-            {"Exercise": name_of_exercise, "Type_of_algorithm": "Tree", "mean_Bcr_train": mean_Bcr_train,
+            {"Exercise": name_of_exercise,"number":exercise_number.replace("_frequency", ""), "Type_of_algorithm": "Tree", "mean_Bcr_train": mean_Bcr_train,
              "mean_Bcr_test": mean_Bcr_test, "Used_fold": iter}, ignore_index=True)
 
     return results_cv
