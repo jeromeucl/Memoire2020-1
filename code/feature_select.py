@@ -1,8 +1,9 @@
 from sklearn.feature_selection import SelectKBest
-from sklearn.feature_selection import chi2
+
 from sklearn import feature_selection, tree
 import pandas as pd
-from Machine_learning import tbl, worktbl, matching
+
+
 from sklearn import preprocessing
 
 import numpy as np
@@ -24,7 +25,7 @@ def features_selection(features_df, target, nb_of_features):
 
     # Select variables with tree
     clf = tree.DecisionTreeClassifier(max_depth=5, class_weight='balanced')
-    clf = clf.fit(scaled_worktbl, target.fillna(method='bfill').notnull().astype(int).to_frame())
+    clf = clf.fit(scaled_worktbl, target.notnull().astype(int).to_frame())
     # Get the most important feature
     importances = clf.feature_importances_
 
@@ -36,6 +37,8 @@ def features_selection(features_df, target, nb_of_features):
 
     return a_scaled
 
+'''
+from Machine_learning import tbl, worktbl, matching
 a = features_selection(worktbl, tbl['1001_frequency'], 20)
 
 # features_selection(worktbl,label,6)
@@ -60,3 +63,4 @@ importances = clf.feature_importances_
 
 best_feature = scaled_worktbl.columns[np.flip(np.argsort(importances)[-nb_of_best_features:])]
 
+'''
