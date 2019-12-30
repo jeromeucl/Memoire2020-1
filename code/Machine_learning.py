@@ -87,6 +87,7 @@ exercise_scheme_of_the_day_before = exercise_scheme_of_the_day_before.apply(
 #I would like to go through all the columns in a dataframe and rename (or map) columns if they contain certain strings.
 #https://stackoverflow.com/questions/32621677/pandas-rename-column-if-contains-string
 
+
 #Replace the in the columns of the exercises activated the day before 'frequency' by 'activated yesterday'
 exercise_scheme_of_the_day_before.columns = exercise_scheme_of_the_day_before.columns.str.replace('frequency', 'Activated_yesterday')
 
@@ -102,8 +103,9 @@ patient_daily_data_of_the_day_before['day'] += 1
 # Merge all the dataframe to get one big table with all data we need
 tbl = pd.merge(exercise_scheme, patient_daily_data_of_the_day_before, on=['patient_id', 'day'], how='left')
 tbl = pd.merge(patient_dt, tbl, on=['patient_id'], how='right')
-tbl = pd.merge(exercise_scheme_of_the_day_before, tbl, on=['patient_id', 'day'], how='right')
 
+'''tbl = pd.merge(exercise_scheme_of_the_day_before, tbl, on=['patient_id', 'day'], how='right')
+'''
 
 
 # Get only the different columns name for each exercises: frequency, intensity and actual inside exsh_column
@@ -259,13 +261,13 @@ worktbl = worktbl.fillna(method='ffill')
 # ------------------------
 # ------------------------
 from crossvalidation import crossval
-
+#worktbls = worktbl.drop(['patientnumber', 'date', 'surgery_date', 'patient_id'], axis=1)
 #Results_cv = crossval(matching, mapping_exercises, tbl, worktbl)
 # save the Results
 #
 #Results_cv.to_csv(Working_Directory+"\cv\Results_cv_"+str(date.today())+".csv")
 
-#Results = importfeature(matching,mapping_exercises,tbl,worktbl,mapping_questionnaires, mapping_answers)
+#Results = importfeature(matching,mapping_exercises,tbl,worktbls,mapping_questionnaires, mapping_answers)
 # save the Results
 #
 #Results.to_csv(Working_Directory+"\mostimportantfeature\Results_with_previousdexo"+str(date.today())+".csv")

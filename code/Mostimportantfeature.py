@@ -45,19 +45,19 @@ def return_index(String, Dataframe, name_of_column):
 
 def importfeature(Matching,Mapping_exercises,Big_tbl,Worktbl,Mapping_questionnaires, Mapping_answers):
     # nb_of_best_features printed in results
-    nb_of_best_features = 4
+    nb_of_best_features = 10
     Important_features_list = ["Important_feature_" + str(s + 1) for s in range(nb_of_best_features)]
     # Build a dataframe for the results
-    results = pd.DataFrame(columns=["Exercise", "Type_of_algorithm", "Bcr_train", "Bcr_test"] + Important_features_list)
+    results = pd.DataFrame(columns=["Exercise","Number_of_exo", "Type_of_algorithm", "Bcr_train", "Bcr_test"] + Important_features_list)
 
     '''Main loop'''
     # Pich one column corresponding to an exercise at a time and make it the label
     for exercise_number in Matching:
         # Extract the number of the exercise (example: 1001)
-        name_of_exercise = exercise_number.replace("_frequency", "")
+        number_of_exercise = exercise_number.replace("_frequency", "")
         # Extract the full name of the exercise (example: Exercise 1 (K): Circulation )
         name_of_exercise = Mapping_exercises['name'][
-            Mapping_exercises.index[Mapping_exercises['number'] == int(name_of_exercise)].tolist()].values[0]
+            Mapping_exercises.index[Mapping_exercises['number'] == int(number_of_exercise)].tolist()].values[0]
         # Create the label for the machine learning algorithm
         label = Big_tbl[exercise_number].notnull().astype(int).to_frame()
         # Split the data and the label into test and train set
@@ -66,12 +66,12 @@ def importfeature(Matching,Mapping_exercises,Big_tbl,Worktbl,Mapping_questionnai
         # If this exercise was never used by the physio, don't run the algorithm
         if sum(label_train.values) == 0:
             results = results.append(
-                Merge({"Exercise": name_of_exercise, "Type_of_algorithm": "Not_attempted", "Bcr_train": 0, "Bcr_test": 0},
+                Merge({"Exercise": name_of_exercise,"Number_of_exo":number_of_exercise, "Type_of_algorithm": "Not_attempted", "Bcr_train": 0, "Bcr_test": 0},
                       {"Important_feature_" + str(s + 1): np.nan for s in range(nb_of_best_features)}),
                 ignore_index=True)
         else:
             # Train prediction
-            clf = tree.DecisionTreeClassifier(max_depth=5,class_weight ='balanced')
+            clf = tree.DecisionTreeClassifier(max_depth=3,class_weight ='balanced')
             clf = clf.fit(train, label_train)
             # Get the most important feature
             importances = clf.feature_importances_
@@ -119,7 +119,7 @@ def importfeature(Matching,Mapping_exercises,Big_tbl,Worktbl,Mapping_questionnai
 
             # Add everinthing to the Result table
             results = results.append(
-                Merge({"Exercise": name_of_exercise, "Type_of_algorithm": "Tree", "Bcr_train": bcr_train,
+                Merge({"Exercise": name_of_exercise,"Number_of_exo":number_of_exercise, "Type_of_algorithm": "Tree", "Bcr_train": bcr_train,
                        "Bcr_test": bcr_test}, message_filled), ignore_index=True)
 
 

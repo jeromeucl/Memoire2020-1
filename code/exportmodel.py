@@ -1,27 +1,22 @@
+'''This file aim to export all models selected with metatreatment'''
 import pandas as pd
-from Machine_learning import matching
-import numpy as np
 from sklearn import tree
-from sklearn.metrics import balanced_accuracy_score
 from sklearn.model_selection import train_test_split
 from Machine_learning import worktbl,tbl,matching
 import pickle
-import pydotplus
-import graphviz
-from IPython.display import Image
-import collections
+
 worktbl = worktbl.drop(['patientnumber', 'date', 'surgery_date', 'patient_id'], axis=1)
-matching.remove('4011_frequency')
-matching = [x for x in matching if not x.startswith('3')]
-#model_param = pd.read_csv("C:\\Users\cocol\Desktop\memoire\Jéjé_work\metaparam\FINALTBL2019-10-14.csv")
-model_param = pd.read_csv("C:\\Users\cocol\Desktop\memoire\Jéjé_work\metaparam\FINALTBL2019-11-14.csv")
-#matching = ["1001_frequency"]
+
+
+model_param = pd.read_csv("C:\\Users\cocol\Desktop\memoire\Jéjé_work\metaparam\FINALTBL2019-12-30.csv")
+
 for exo in matching:
 
     label = tbl[exo].notnull().astype(int).to_frame()
     # Split the data and the label into test and train set
     train, test, label_train, label_test = train_test_split(worktbl, label, test_size=0.2)
     # If this exercise was never used by the physio, don't run the algorithm
+    
     if sum(label_train.values) != 0:
         # Train prediction
         param = model_param[model_param['exercise_number'] == exo]

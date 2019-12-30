@@ -4,8 +4,8 @@ from sklearn.metrics import balanced_accuracy_score
 from sklearn.model_selection import KFold  # import KFold
 
 
-def crossval(Matching, Mapping_exercises, Big_tbl, Worktbl):
-    Worktlb = Worktbl.drop(['patientnumber', 'date', 'surgery_date', 'patient_id'], axis=1)
+def crossval(Matching, Mapping_exercises, Big_tbl, Worktlb):
+
     # Build a dataframe for the results
     results_cv = pd.DataFrame(columns=["Exercise","number", "Type_of_algorithm", "mean_Bcr_train", "mean_Bcr_test", 'Used_fold'])
     used_fold = 5
