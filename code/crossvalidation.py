@@ -1,3 +1,4 @@
+__author__      = "Jérôme Dewandre"
 import pandas as pd
 from sklearn import tree
 from sklearn.metrics import balanced_accuracy_score

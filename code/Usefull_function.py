@@ -1,3 +1,4 @@
+__author__      = "Jérôme Dewandre"
 import pandas as pd
 import numpy as np
 import os
@@ -71,12 +72,16 @@ Input : String: The name of the column in the Bigtbl
         number_of_diffrerent_responses: for the question String, several possible answers exist,
         number_of_diffrerent_responses is the number of possible answers
         Working_Directory: directory where the tables handling the 1A2A3 fromat are
+        redoAAunwrap: Boolean value, False if you are in development, True if you use a new workTbl
 Output : the above worktbl modified
 '''
-def add_to_work(String, workTbl, Bigtbl, number_of_diffrerent_responses,Working_Directory):
+def add_to_work(String, workTbl, Bigtbl, number_of_diffrerent_responses,Working_Directory,local):
+    if (not local) & (os.path.exists(Working_Directory + "\\filled_" + String + ".csv")):
+        os.remove(Working_Directory + "\\filled_" + String + ".csv")
     if not os.path.isfile(Working_Directory + "\\filled_" + String + ".csv"):
         Newtbl = AAunwrap(Bigtbl, number_of_diffrerent_responses, String)
         Newtbl.to_csv(Working_Directory + "\\filled_" + String + ".csv")
+
     df1 = pd.read_csv(Working_Directory + "\\filled_" + String + ".csv")
     workTbl = pd.concat([workTbl, df1], axis=1, sort=False)
     return workTbl.drop(['Unnamed: 0'], axis=1)

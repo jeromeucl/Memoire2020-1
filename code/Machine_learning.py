@@ -1,28 +1,38 @@
 '''This file is the main file to execute, You have to run on you laptop the local mysql database
 first and change the variable working directory (witch will be the directory where all the output at csv format will be registered)
 second change the 'sytem.path.append(YOURFOLDER)' with the location of the python files'''
+__author__      = "Jérôme Dewandre"
+
+'''TO FILL'''
+#Are you using the local db?
+localdb = True
+Working_Directory = "C:\\Users\cocol\Desktop\memoire\Jéjé_work\\test\\"
+
+
 from datetime import date
 import os
 import sys
 import pymysql.cursors
+# Check if those directorys exist and create them if they don't
+from pathlib import Path
+Path(Working_Directory).mkdir(parents=True, exist_ok=True)
 
-sys.path.append('C:\\Users\cocol\Desktop\memoire\Jéjé_work\code')
+sys.path.append(Working_Directory)
 from Mostimportantfeature import *
 
-Working_Directory = "C:\\Users\cocol\Desktop\memoire\Jéjé_work"
+
 
 from Usefull_function import *
-
 
 # mysql connection to the cloud
 # connection = pymysql.connect(host='173.31.240.35.bc.googleusercontent.com', user='', password='',
 #                             db='moveup_dwh', charset='utf8mb4', cursorclass=pymysql.cursors.DictCursor)
-
-# mysql connection to the local database
-connection = pymysql.connect(host='127.0.0.1', user='root', password='root',db='moveup_dwh', charset='utf8mb4', cursorclass=pymysql.cursors.DictCursor)
-
-# mysql connection to the moveUp database
-#connection = pymysql.connect(host='35.240.31.173', user='root', password='aKkidLJ45hdturo3',db='moveup_dwh', charset='utf8mb4', cursorclass=pymysql.cursors.DictCursor)
+if localdb:
+    # mysql connection to the local database
+    connection = pymysql.connect(host='127.0.0.1', user='root', password='root',db='moveup_dwh', charset='utf8mb4', cursorclass=pymysql.cursors.DictCursor)
+else:
+    # mysql connection to the moveUp database
+    connection = pymysql.connect(host='35.240.31.173', user='root', password='aKkidLJ45hdturo3',db='moveup_dwh', charset='utf8mb4', cursorclass=pymysql.cursors.DictCursor)
 
 
 
@@ -104,6 +114,8 @@ patient_daily_data_of_the_day_before['day'] += 1
 tbl = pd.merge(exercise_scheme, patient_daily_data_of_the_day_before, on=['patient_id', 'day'], how='left')
 tbl = pd.merge(patient_dt, tbl, on=['patient_id'], how='right')
 
+'''The part below was aimed to seek for differences between the exercises did the day before but was removed'''
+
 '''tbl = pd.merge(exercise_scheme_of_the_day_before, tbl, on=['patient_id', 'day'], how='right')
 '''
 
@@ -136,16 +148,16 @@ worktbl = pd.concat([worktbl.drop(['limb'], axis=1), pd.get_dummies(worktbl['lim
 '''Preprocessing string with 1A2A3A fromat'''
 
 # AcWh1 (what's activity did you do today)?
-worktbl = add_to_work('AcWh1', worktbl, tbl, 14,Working_Directory)
+worktbl = add_to_work('AcWh1', worktbl, tbl, 14,Working_Directory,localdb)
 
-# InDo1 (Do you experience swelling in other places than the index joint?  )
-worktbl = add_to_work('InDo1', worktbl, tbl, 6,Working_Directory)
+# InDo1 (Do you experience swelling in other places than the index joint?)
+worktbl = add_to_work('InDo1', worktbl, tbl, 6,Working_Directory,localdb)
 
 #  'ExWh3'Why didn't you do your exercises
-worktbl = add_to_work('ExWh3', worktbl, tbl, 4,Working_Directory)
+worktbl = add_to_work('ExWh3', worktbl, tbl, 4,Working_Directory,localdb)
 
 # 'WeWh2' Why didn't you wear your band all day??
-worktbl = add_to_work('WeWh2', worktbl, tbl, 3,Working_Directory)
+worktbl = add_to_work('WeWh2', worktbl, tbl, 3,Working_Directory,localdb)
 
 # Select all the columns containing frequency in the table with the different exercise as columns for the label
 matching = [s for s in exsh_column if "frequency" in s]
