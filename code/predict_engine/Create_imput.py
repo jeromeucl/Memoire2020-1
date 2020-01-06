@@ -1,5 +1,5 @@
 __author__      = "Jérôme Dewandre"
-
+import pandas as pd
 
 '''This function is aimed to select the data from the 'worktbl' and the 'tbl' after a certain date
 Input : 
@@ -30,9 +30,10 @@ Output : imput_data_work: the worktbl with data after date
 #Exemple of use:
 #getimput(worktbl,tbl,'2018-11-3')
 '''
-def getexercise_Of_yesterday(Worktbl,Tbl,date):
-
-    indexes = Worktbl['date'] == date
+def getexercise_Of_yesterday(exercise_list,Tbl,date):
+    collist = ['patientnumber', 'patient_id', 'day'] + exercise_list
+    indexes = pd.to_datetime(Tbl['date']) == date
     imput_data_tbl = Tbl.loc[indexes]
-    imput_data_tbl = imput_data_tbl.apply(lambda column: column.notnull().astype(int).to_frame() if ('_frequency' in column.name) else column, axis=0)
+    imput_data_tbl = imput_data_tbl.apply(lambda column: column.notnull().astype(int) if ('_frequency' in column.name) else column, axis=0)
+    imput_data_tbl = imput_data_tbl[collist]
     return imput_data_tbl.reset_index().drop('index', axis=1)

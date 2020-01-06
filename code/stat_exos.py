@@ -36,3 +36,15 @@ plt.bar(_exercise.index.values, list(_exercise.iloc[:,0]), color='b' )
 
 
 plt.show()
+from Machine_learning import tbl, matching
+collist = ['patientnumber', 'patient_id', 'day'] + matching
+imput_data_tbl = tbl.apply(lambda column: column.notnull().astype(int) if ('_frequency' in column.name) else column, axis=0)
+imput_data_tbl = imput_data_tbl[collist]
+
+
+import matplotlib.pyplot as plt
+
+a= imput_data_tbl[matching].sum(axis=1)
+_ = plt.hist(a,14)  # arguments are passed to np.histogram
+plt.title("Number_of_exercises proposed by PT")
+plt.show()
