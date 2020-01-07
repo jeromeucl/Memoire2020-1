@@ -35,3 +35,4 @@ else:
 
 # 5. Propose exercises which are also proposed by the protocol
 
+# 6. Check for similarities between exos
