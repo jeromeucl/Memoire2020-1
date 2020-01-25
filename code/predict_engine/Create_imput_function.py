@@ -18,8 +18,6 @@ def getimput(Worktbl,Tbl,date):
     imput_data_tbl = Tbl.loc[indexes]
     return imput_data_work.reset_index().drop('index', axis=1),imput_data_tbl.reset_index().drop('index', axis=1)
 
-
-
 '''This function is aimed to select the data from the 'worktbl' and the 'tbl' after a certain date
 Input : 
         Worktbl: The table in which the features are added

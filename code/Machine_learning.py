@@ -6,7 +6,7 @@ __author__ = "Jérôme Dewandre"
 '''TO FILL'''
 # Are you using the local db?
 localdb = True
-Working_Directory = "C:\\Users\cocol\Desktop\memoire\Jéjé_work\\test\\"
+Working_Directory = "C:\\Users\cocol\Desktop\memoire\Jéjé_work\\test3\\"
 
 from datetime import date
 import os
@@ -142,7 +142,7 @@ worktbl = tbl.drop(exsh_column, axis=1)
 worktbl = worktbl.drop(['is_basic_strength', 'is_functional_strength', 'is_mobility', 'is_symp_reduction', 'calories'],
                        axis=1)
 ''' That part of the code is aimed to deal with the 1A2A3 format'''
-worktbl = worktbl.drop(['AcWh1', 'InDo1', 'MeAr1_other', 'MeAr2_other', 'ExWh3', 'WeWh2', ], axis=1)
+worktbl = worktbl.drop(['AcWh1', 'InDo1', 'MeAr1_other', 'MeAr2_other', 'ExWh3', 'WeWh2' ], axis=1)
 # I also drop 'calories' here
 
 

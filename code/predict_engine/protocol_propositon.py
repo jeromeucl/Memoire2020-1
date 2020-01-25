@@ -7,12 +7,12 @@ import pickle
 from datetime import datetime, timedelta
 
 
-from predict_engine.Create_imput import getimput
+from predict_engine.Create_imput_function import getimput
 from Machine_learning import tbl,worktbl,matching, Working_Directory, localdb
 
 #Select the patient for with you want to predict data with a startdate and set the location of the models previously built
 startdate = '2018-11-3'
-Location_of_the_models = 'C:\\Users\cocol\PycharmProjects\Memoire2020\code\modeltoexport'
+Location_of_the_models = Working_Directory +'models'
 
 
 
@@ -49,7 +49,6 @@ matchi_hip = [x for x in matching if x.startswith('2')]
 
 '''This function is aimed to predict for each patient each day which exercise will or will not be proposed
 Input : 
-       
         matchings: exercise list for knee or hip patients
         input: input for machine learning with hip or knee patients
 Output : Returntbl: the table of prediciton for each days
