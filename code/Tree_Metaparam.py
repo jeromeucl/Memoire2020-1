@@ -23,8 +23,8 @@ def tree_metaparam(worktbl,tbl,matching,workdir):
 
 
     '''Metaparameters to be explored'''
-    #max_depth = [1,2,3,5,10,20]
-    max_depth = [1, 2, 3]
+    max_depth = [1,2,3,5,10,20]
+
     min_samples_split = [10,20]
     min_impurity_decrease = [0,0.01]
 

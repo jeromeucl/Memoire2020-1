@@ -2,6 +2,7 @@ __author__      = "Jérôme Dewandre"
 import pandas as pd
 import numpy as np
 import os
+from datetime import datetime, timedelta,date
 ''' This fuction handle the '1A2A3' fromat to usefull features for the machine learning algorithm and split the cell
     into a certain number of column equals to the number_of_diffrerent_responses to the question asked and fill the column
     with one if the patient answered yes to a given question and with 0 otherwise. For example if there is 6 possibilities of
@@ -121,3 +122,24 @@ def add_trend_to_worktbl(Variable,threshold,number_of_past_days1,number_of_past_
         medged_tbl =0
         print('Wrong order of pain average days (number_of_past_days 1 and 2)')
     return medged_tbl
+
+'''The pupose of this function is to fill the null values in the date feature of the Tbl according to the patient_id and the day'''
+def fillmissingDate(Tbl):
+    a = Tbl[['day', 'date', 'patient_id', 'surgery_date']]  # 1845 #2400 #2399
+    # Index containing null dates          4ZzBWoQLo8uyQHJ4W##MA5oK5WxwKnxLjWWP
+    index_nul = a.index[a['date'].isnull() == True].tolist()
+    patient_with_null_dates = set(a.loc[index_nul]['patient_id'])
+    for j in patient_with_null_dates:
+        sub_tbl = a.loc[a['patient_id'] == j]
+        sub_index_Null = sub_tbl.index[sub_tbl['date'].isnull() == True].tolist()
+        sub_index_filled_array = sub_tbl.index[sub_tbl['date'].isnull() == False].tolist()
+        if len(sub_index_filled_array) > 0:
+            sub_index_filled = sub_index_filled_array[0]
+            ref_day = a['day'].loc[sub_index_filled]
+            ref_date = a['date'].loc[sub_index_filled]
+            for i in sub_index_Null:
+                a.loc[i,'date'] = datetime.strftime(ref_date - timedelta(int(ref_day - a.loc[i,'day'])),
+                                                     '%Y-%m-%d')
+
+    Tbl['date'] = a['date']
+    return Tbl

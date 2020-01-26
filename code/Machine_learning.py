@@ -123,6 +123,15 @@ patient_daily_data_of_the_day_before['day'] += 1
 tbl = pd.merge(exercise_scheme, patient_daily_data_of_the_day_before, on=['patient_id', 'day'], how='left')
 tbl = pd.merge(patient_dt, tbl, on=['patient_id'], how='right')
 
+# convert the date format to datetime
+tbl['date'] = pd.to_datetime(tbl['date'],format='%Y-%m-%d')
+
+'''Some days, exercises are proposed while the patient doesn't fill the daily questionnary'''
+
+
+tbl = fillmissingDate(tbl)
+
+
 '''The part below was aimed to seek for differences between the exercises did the day before but was removed'''
 
 '''tbl = pd.merge(exercise_scheme_of_the_day_before, tbl, on=['patient_id', 'day'], how='right')
@@ -138,7 +147,7 @@ nrow = len(tbl[tbl.columns[0]])
 # Select from the big talbe the data usefull for the machine learning and drop the labels (from exercise_scheme) and patient id
 worktbl = tbl.drop(exsh_column, axis=1)
 
-'''That part drop meaningles variables'''
+'''That part drop meaningless variables'''
 worktbl = worktbl.drop(['is_basic_strength', 'is_functional_strength', 'is_mobility', 'is_symp_reduction', 'calories'],
                        axis=1)
 ''' That part of the code is aimed to deal with the 1A2A3 format'''
@@ -150,6 +159,10 @@ worktbl = worktbl.drop(['AcWh1', 'InDo1', 'MeAr1_other', 'MeAr2_other', 'ExWh3',
 worktbl["gender"].replace({'Female': 0, 'Male': 1}, inplace=True)
 worktbl["MeAr2"].replace(-1.0, np.nan, inplace=True)
 
+#Is it hip or a knee surgery?
+
+#Is it hip (1) or knee (0) surgery?
+worktbl = pd.concat([worktbl, pd.DataFrame({'Hip or Knee?':worktbl ['limb'].str.contains("Hip").astype(int)})], axis=1)
 # This part build one columns for each possible type of surgery and fill them with 1 (that type of surgery was used) or 0 (that type of surgery wasn't used)
 worktbl = pd.concat([worktbl.drop(['limb'], axis=1), pd.get_dummies(worktbl['limb'])], axis=1)
 
@@ -296,7 +309,7 @@ col_specific_hip = [k for k in worktbl.columns if ('Hip' in k) & ('ANSWER: Hip '
 inputML_knee = worktbl.drop(col_specific_hip, axis=1)
 inputML_hip = worktbl.drop(col_specific_knee, axis=1)
 
-'''This part of the code is aimed to create the labet/output table for classification or regression'''
+'''This part of the code is aimed to create the label/output table for classification or regression'''
 #Classification
 Activation_of_exercise_label = tbl.apply(lambda x: x.notnull().astype(int) if "frequency" in x.name else x)
 Activation_of_exercise_label = Activation_of_exercise_label[['patientnumber', 'date', 'patient_id'] + matching]

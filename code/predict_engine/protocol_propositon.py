@@ -135,13 +135,16 @@ for column in matchi_knee:
 
 daybefore_day = datetime.strftime(pd.to_datetime(startdate) - timedelta(1), '%Y-%m-%d')
 Exercises_done_yesterday = getexercise_Of_date(matchi_knee, tbl, daybefore_day)
-Exercises_done_yesterday_patient = Exercises_done_yesterday[Exercises_done_yesterday['patient_id'].isin(list(tableknee['patient_id'].unique()))].reset_index().drop('index', axis=1)
+Exercises_done_yesterday_filtered = Exercises_done_yesterday[Exercises_done_yesterday['patient_id'].isin(list(tableknee['patient_id'].unique()))].reset_index().drop('index', axis=1)
 
-for line in list(range(t1)):
-    if t1.loc[0]['number_of_proposed_ex']>=number_max_exercises:
-        print('todo')
-
-
+model_exo = [e for e in list(t1.columns)if e not in ('patient_id', 'patientnumber', 'date', 'day','number_of_proposed_ex')]
+for line in list(range(t1.shape[0])):
+    '''This part of the code is aimed  to select exercises that were not made yesterday if the number of proposed exercises is higher than 6'''
+    a = t1[model_exo]
+    b = ~Exercises_done_yesterday_filtered[matchi_knee] + 2
+    c = pd.DataFrame(a.values * b.values, columns=a.columns, index=a.index)
+    t1.loc[c.sum(axis=1)>= number_max_exercises,model_exo] = c.loc[c.sum(axis=1)>= number_max_exercises]
+    t1['number_of_proposed_ex'] = t1.loc[:,model_exo].sum(axis=1)
 # 3. Make a recommendation service based on a criteria (for example after doing an exercise, the app could ask: "Was that exercise pleasant/useful?" and from that we could create the recommendation: patient who think that single leg stance is useful also think that hometrainer is useful)
 #To DO
 # 4. Propose exercises which have a better BCR
