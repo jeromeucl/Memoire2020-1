@@ -6,7 +6,7 @@ __author__ = "Jérôme Dewandre"
 '''TO FILL'''
 # Are you using the local db?
 localdb = True
-Working_Directory = "C:\\Users\cocol\Desktop\memoire\Jéjé_work\\test3\\"
+Working_Directory = "C:\\Users\cocol\Desktop\memoire\Jéjé_work\\test2\\"
 
 from datetime import date
 import os

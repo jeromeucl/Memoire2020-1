@@ -48,3 +48,6 @@ a= imput_data_tbl[matching].sum(axis=1)
 _ = plt.hist(a,14)  # arguments are passed to np.histogram
 plt.title("Number_of_exercises proposed by PT")
 plt.show()
+
+'''Diff between tree len 3 and rest of the trees'''
+

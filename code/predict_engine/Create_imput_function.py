@@ -28,8 +28,8 @@ Output : imput_data_work: the worktbl with data after date
 #Exemple of use:
 #getimput(worktbl,tbl,'2018-11-3')
 '''
-def getexercise_Of_yesterday(exercise_list,Tbl,date):
-    collist = ['patientnumber', 'patient_id', 'day'] + exercise_list
+def getexercise_Of_date(exercise_list,Tbl,date):
+    collist = ['patientnumber', 'patient_id', 'day','date'] + exercise_list
     indexes = pd.to_datetime(Tbl['date']) == date
     imput_data_tbl = Tbl.loc[indexes]
     imput_data_tbl = imput_data_tbl.apply(lambda column: column.notnull().astype(int) if ('_frequency' in column.name) else column, axis=0)
