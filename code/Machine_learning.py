@@ -191,7 +191,7 @@ worktbl = worktbl.fillna(method='ffill')
 worktbl['date'] = pd.to_datetime(worktbl['date'])
 # Add the trend of the pain
 
-'''This part of the code aim to handle continuous variables and thier variation in time'''
+'''This part of the code aim to handle continuous variables and their variation in time'''
 
 thresh = 0
 var = 'PaIn1'
@@ -220,12 +220,56 @@ trend_tbl = add_trend_to_worktbl(var, thresh, 3, 10, worktbl)
 worktbl = pd.concat([worktbl, trend_tbl], axis=1)
 worktbl = worktbl.loc[:, ~worktbl.columns.duplicated()]
 
+#Using regression
+vartoplot = 'PaIn2'
+regtbl = worktbl[['patient_id','day',vartoplot]]
+regtbl['linearRegression_'+vartoplot] =0
+set(worktbl['patient_id'])
+
+patient = regtbl[regtbl['patient_id']=='zwmXheCSRJkyAjf6J##GttezLQ4XRXtBMLNk'][['day',vartoplot]].reset_index(drop=True)
+
+
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.signal import savgol_filter
+from sklearn.linear_model import LinearRegression
+
+
+Y = np.array(patient['PaIn2'].values)
+Yhat= savgol_filter(Y, 11,3)
+X = np.array(patient['day'].values.reshape(-1,1))
+plt.figure(1)
+plt.plot(X, Y,  color='gray')
+for start in list(range(0,60,5)):
+    stop = start + 5
+    x = X[start:stop]
+    y = Y.reshape(-1,1)[start:stop]
+    yhat = Yhat.reshape(-1,1)[start:stop]
+    regressor = LinearRegression()
+    regressor.fit(x, y) #training the algorithm
+    pred = regressor.predict(x)
+    regressor = LinearRegression()
+    regressor.fit(x, yhat) #training the algorithm
+    pred_hat = regressor.predict(x)
+    plt.plot(x, pred_hat, color='red', linewidth=2)
+
+plt.show()
+
+plt.figure(1)
+plt.scatter(x, y,  color='gray')
+plt.plot(x, pred, color='red', linewidth=2)
+plt.show()
+plt.figure(2)
+plt.scatter(x, yhat,  color='gray')
+plt.plot(x, pred_hat, color='red', linewidth=2)
+plt.show()
+
+
 '''This part of the code is made for interpretability purpose and replace the names of the variabes by their full names'''
 # Replace all names of columns in the worktbl by their full names:
 code_names = list(worktbl.columns)
 
 for ft in code_names:
-
     message = ''
     if find_dolar(ft):
         feature_code, answer = ft.split("$")

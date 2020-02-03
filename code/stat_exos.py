@@ -51,3 +51,45 @@ plt.show()
 
 '''Diff between tree len 3 and rest of the trees'''
 
+
+
+'''Plotting the pain with diff win size'''
+vartoplot = 'PaIn2'
+regtbl = worktbl[['patient_id','day',vartoplot]]
+regtbl['linearRegression_'+vartoplot] =0
+set(worktbl['patient_id'])
+patient = regtbl[regtbl['patient_id']=='zwmXheCSRJkyAjf6J##GttezLQ4XRXtBMLNk'][['day',vartoplot]]
+patient = regtbl[regtbl['patient_id']=='zrSkJrADH3RSXsic4##ruozPRCsc2kor7pwf'][['day',vartoplot]]
+patient = regtbl[regtbl['patient_id']=='yxi8ZPkb6DoGno5yA##ehDyowt9ukDSHv8CM'][['day',vartoplot]]
+
+patient.set_index('day').plot()
+
+import matplotlib.pyplot as plt
+from scipy.signal import savgol_filter
+x = np.array(patient['day'])
+y = np.array(patient['PaIn2'])
+yhat0 = savgol_filter(y, 11,1 )
+yhat1 = savgol_filter(y, 11,2 )
+yhat2 = savgol_filter(y, 11,3 )
+yhat3 = savgol_filter(y, 11,4 )
+plt.figure(1)
+
+plt.plot(x,y,label = 'Not filtered')
+plt.plot(x,yhat0, color='red',label = 'wind=11 poly=1')
+plt.legend()
+plt.show()
+plt.figure(2)
+plt.plot(x,y,label = 'Not filtered')
+plt.plot(x,yhat1, color='red',label = 'wind=11 poly=2')
+plt.legend()
+plt.show()
+plt.figure(3)
+plt.plot(x,y,label = 'Not filtered')
+plt.plot(x,yhat2, color='red',label = 'wind=11 poly=3')
+plt.legend()
+plt.show()
+plt.figure(4)
+plt.plot(x,y,label = 'Not filtered')
+plt.plot(x,yhat3, color='red',label = 'wind=11 poly=4')
+plt.legend()
+plt.show()
